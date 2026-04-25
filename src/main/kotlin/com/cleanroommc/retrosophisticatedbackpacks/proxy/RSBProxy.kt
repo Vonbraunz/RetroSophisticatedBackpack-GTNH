@@ -1,6 +1,8 @@
 package com.cleanroommc.retrosophisticatedbackpacks.proxy
 
 import com.cleanroommc.retrosophisticatedbackpacks.block.Blocks
+import com.cleanroommc.retrosophisticatedbackpacks.client.gui.GuiBackpack
+import com.cleanroommc.retrosophisticatedbackpacks.common.gui.BackpackContainer
 import com.cleanroommc.retrosophisticatedbackpacks.item.Items
 import com.cleanroommc.retrosophisticatedbackpacks.util.Utils.asTranslationKey
 import cpw.mods.fml.client.registry.ClientRegistry
@@ -30,6 +32,8 @@ abstract class RSBProxy {
 
     open fun registerItemRenderer(item: Item, meta: Int, id: String) {}
 
+    open fun createBackpackGui(container: BackpackContainer): Any? = null
+
     class ServerProxy : RSBProxy()
 
     class ClientProxy : RSBProxy() {
@@ -45,5 +49,7 @@ abstract class RSBProxy {
             super.init(event)
             ClientRegistry.registerKeyBinding(OPEN_BACKPACK_KEYBIND)
         }
+
+        override fun createBackpackGui(container: BackpackContainer): Any? = GuiBackpack(container)
     }
 }

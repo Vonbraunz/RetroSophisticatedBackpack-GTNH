@@ -79,7 +79,7 @@ open class SimpleInventory(val size: Int) : INBTSerializable<NBTTagCompound> {
         }
     }
 
-    protected open fun onContentsChanged(slot: Int) {}
+    internal open fun onContentsChanged(slot: Int) {}
 
     protected fun validateSlotIndex(slot: Int) {
         require(slot in 0 until size) { "Slot $slot not in valid range [0,$size)" }
