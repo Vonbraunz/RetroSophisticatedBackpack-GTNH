@@ -16,9 +16,10 @@ class BackpackItemStackHandler(size: Int, private val wrapper: BackpackWrapper) 
     override fun isItemValid(slot: Int, stack: ItemStack): Boolean {
         val regName = GameRegistry.findUniqueIdentifierFor(stack.item)?.toString()
         if (Config.blacklistedItems.contains(regName)) return false
+        if (stack.item is BackpackItem) return false
         val memorized = memorizedSlotStack[slot]
         return if (memorized == null) {
-            stack.item !is BackpackItem || wrapper.canNestBackpack()
+            true
         } else if (memorizedSlotRespectNbtList[slot]) {
             ItemStack.areItemStacksEqual(stack, memorized)
         } else {

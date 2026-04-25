@@ -1,6 +1,7 @@
 package com.cleanroommc.retrosophisticatedbackpacks.common.gui
 
 import com.cleanroommc.retrosophisticatedbackpacks.capability.BackpackWrapper
+import com.cleanroommc.retrosophisticatedbackpacks.item.BackpackItem
 import com.cleanroommc.retrosophisticatedbackpacks.item.UpgradeItem
 import com.cleanroommc.retrosophisticatedbackpacks.inventory.SimpleInventoryAdapter
 import net.minecraft.entity.player.EntityPlayer
@@ -31,6 +32,9 @@ open class BackpackContainer(
     // How far right the backpack grid starts (upgrade column + gap)
     val backpackOffsetX = UPGRADE_COL_WIDTH + UPGRADE_GAP
 
+    // Horizontal offset to center the 9-slot player inventory under the backpack grid
+    val playerXOffset = (rowSize - 9) * SLOT_SIZE / 2
+
     init {
         val backpackInv = SimpleInventoryAdapter(wrapper.backpackItemStackHandler, "backpack")
         val upgradeInv  = SimpleInventoryAdapter(wrapper.upgradeItemStackHandler, "upgrades")
@@ -39,9 +43,12 @@ open class BackpackContainer(
         for (i in 0 until wrapper.backpackInventorySize()) {
             val col = i % rowSize
             val row = i / rowSize
-            addSlotToContainer(Slot(backpackInv, i,
+            addSlotToContainer(object : Slot(backpackInv, i,
                 backpackOffsetX + LEFT_PAD + col * SLOT_SIZE,
-                TOP_PAD + row * SLOT_SIZE))
+                TOP_PAD + row * SLOT_SIZE) {
+                override fun isItemValid(stack: ItemStack): Boolean =
+                    stack.item !is BackpackItem
+            })
         }
 
         // Upgrade slots (left column)
@@ -55,22 +62,22 @@ open class BackpackContainer(
             })
         }
 
-        // Player main inventory (9×3)
+        // Player main inventory (9×3) — centered under the backpack grid
         val playerInv = player.inventory
         for (row in 0..2) {
             for (col in 0..8) {
                 val slotIndex = 9 + row * 9 + col
                 addSlotToContainer(Slot(playerInv, slotIndex,
-                    backpackOffsetX + LEFT_PAD + col * SLOT_SIZE,
+                    backpackOffsetX + LEFT_PAD + playerXOffset + col * SLOT_SIZE,
                     TOP_PAD + colSize * SLOT_SIZE + PLAYER_INV_GAP + row * SLOT_SIZE))
             }
         }
 
-        // Player hotbar
+        // Player hotbar — centered under the backpack grid
         for (col in 0..8) {
             val isBackpackSlot = backpackSlotIndex == col
             addSlotToContainer(object : Slot(playerInv, col,
-                backpackOffsetX + LEFT_PAD + col * SLOT_SIZE,
+                backpackOffsetX + LEFT_PAD + playerXOffset + col * SLOT_SIZE,
                 TOP_PAD + colSize * SLOT_SIZE + PLAYER_INV_GAP + 3 * SLOT_SIZE + HOTBAR_GAP) {
                 override fun canTakeStack(player: EntityPlayer): Boolean =
                     !isBackpackSlot || super.canTakeStack(player)
@@ -97,6 +104,8 @@ open class BackpackContainer(
                 val isUpgrade = stack.item is UpgradeItem
                 if (isUpgrade) {
                     if (!mergeItemStack(stack, upgradeSlotStart, upgradeSlotEnd, false)) return null
+                } else if (stack.item is BackpackItem) {
+                    return null // block shift-clicking backpacks into backpack inventory
                 } else {
                     if (!mergeItemStack(stack, backpackSlotStart, backpackSlotEnd, false)) return null
                 }
@@ -128,7 +137,7 @@ open class BackpackContainer(
         const val UPGRADE_COL_WIDTH = 22   // width of the upgrade column strip
         const val UPGRADE_GAP       = 2    // gap between upgrade strip and backpack grid
         const val UPGRADE_SLOT_X    = 3    // x of upgrade slots within the GUI
-        const val PLAYER_INV_GAP    = 7
+        const val PLAYER_INV_GAP    = 26   // main panel bottom pad (5) + panel gap (4) + inv label area (17)
         const val HOTBAR_GAP        = 4
     }
 }

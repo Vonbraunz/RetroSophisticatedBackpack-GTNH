@@ -1,7 +1,10 @@
 package com.cleanroommc.retrosophisticatedbackpacks.client.gui
 
+import com.cleanroommc.retrosophisticatedbackpacks.Tags
 import com.cleanroommc.retrosophisticatedbackpacks.common.gui.BackpackContainer
 import net.minecraft.client.gui.inventory.GuiContainer
+import net.minecraft.util.ResourceLocation
+import org.lwjgl.opengl.GL11
 
 class GuiBackpack(private val container: BackpackContainer) : GuiContainer(container) {
 
@@ -15,66 +18,81 @@ class GuiBackpack(private val container: BackpackContainer) : GuiContainer(conta
         private const val PGAP = BackpackContainer.PLAYER_INV_GAP
         private const val HGAP = BackpackContainer.HOTBAR_GAP
 
+        // PGAP = 26 = main-panel-bottom-pad(5) + panel-gap(4) + inv-label-area(17)
+        private const val MAIN_BPAD = 5     // bottom padding inside main panel
+        private const val PANEL_GAP = 4     // visible gap between the two panels
+        private const val INV_TPAD  = 17    // top padding inside inventory panel (room for label)
+
         private const val COLOR_PANEL   = 0xFFC6C6C6.toInt()
-        private const val COLOR_SLOT_BG = 0xFF8B8B8B.toInt()
         private const val COLOR_SHADOW  = 0xFF373737.toInt()
         private const val COLOR_HILIGHT = 0xFFFFFFFF.toInt()
+        private const val COLOR_TEXT    = 0x404040
+
+        private val SLOTS_TEX = ResourceLocation(Tags.MOD_ID, "textures/gui/slots_background.png")
     }
+
+    // Inventory panel matches main panel width; player slots are centered within it
+    private val invPanelW get() = LPAD + container.rowSize * SLOT + LPAD
 
     init {
         xSize = UCOL + UGAP + LPAD + container.rowSize * SLOT + LPAD
-        ySize = TOP + container.colSize * SLOT + 96
+        // ySize = chest area + main bottom pad + gap + inv label + 3 rows + hotbar gap + hotbar + inv bottom pad
+        ySize = TOP + container.colSize * SLOT + MAIN_BPAD + PANEL_GAP + INV_TPAD + 3 * SLOT + HGAP + SLOT + MAIN_BPAD
     }
 
     override fun drawGuiContainerBackgroundLayer(partialTicks: Float, mouseX: Int, mouseY: Int) {
-        val panelX = guiLeft + UCOL + UGAP
-        val panelW = LPAD + container.rowSize * SLOT + LPAD
-        val chestH = TOP + container.colSize * SLOT
+        val panelX    = guiLeft + UCOL + UGAP
+        val panelW    = LPAD + container.rowSize * SLOT + LPAD
+        val chestH    = TOP + container.colSize * SLOT
 
-        // Main panel background
-        drawRect(panelX, guiTop, panelX + panelW, guiTop + ySize, COLOR_PANEL)
-        drawRect(panelX,               guiTop,             panelX + panelW,     guiTop + 1,        COLOR_SHADOW)
-        drawRect(panelX,               guiTop,             panelX + 1,          guiTop + ySize,    COLOR_SHADOW)
-        drawRect(panelX + panelW - 1,  guiTop,             panelX + panelW,     guiTop + ySize,    COLOR_HILIGHT)
-        drawRect(panelX,               guiTop + ySize - 1, panelX + panelW,     guiTop + ySize,    COLOR_HILIGHT)
+        // y-coordinates of the two panels
+        val mainTop   = guiTop
+        val mainBot   = guiTop + chestH + MAIN_BPAD
+        val invTop    = mainBot + PANEL_GAP
+        val invBot    = guiTop + ySize
 
-        // Backpack inventory slot holes
-        for (row in 0 until container.colSize) {
-            for (col in 0 until container.rowSize) {
-                slotHole(panelX + LPAD + col * SLOT, guiTop + TOP + row * SLOT)
-            }
+        // ── Upgrade column panel (left, height matches main panel) ──────────────
+        val upgradeH = TOP + container.wrapper.upgradeSlotsSize() * SLOT + MAIN_BPAD
+        drawRect(guiLeft, mainTop, panelX, mainTop + upgradeH, COLOR_PANEL)
+        drawRect(guiLeft,            mainTop,                guiLeft + 1, mainTop + upgradeH, COLOR_SHADOW)
+        drawRect(guiLeft,            mainTop,                panelX,      mainTop + 1,        COLOR_SHADOW)
+        drawRect(panelX - 1,         mainTop,                panelX,      mainTop + upgradeH, COLOR_HILIGHT)
+        drawRect(guiLeft,            mainTop + upgradeH - 1, panelX,      mainTop + upgradeH, COLOR_HILIGHT)
+
+        if (container.wrapper.upgradeSlotsSize() > 0) {
+            GL11.glColor4f(1f, 1f, 1f, 1f)
+            mc.textureManager.bindTexture(SLOTS_TEX)
+            drawTexturedModalRect(guiLeft + USX - 1, mainTop + TOP - 1, 0, 0, SLOT, container.wrapper.upgradeSlotsSize() * SLOT)
         }
 
-        // Player main inventory slot holes (3 × 9)
-        val playerY = guiTop + chestH + PGAP
-        for (row in 0 until 3) {
-            for (col in 0 until 9) {
-                slotHole(panelX + LPAD + col * SLOT, playerY + row * SLOT)
-            }
-        }
+        // ── Main backpack panel ─────────────────────────────────────────────────
+        drawRect(panelX, mainTop, panelX + panelW, mainBot, COLOR_PANEL)
+        drawRect(panelX,              mainTop,     panelX + panelW, mainTop + 1,  COLOR_SHADOW)
+        drawRect(panelX,              mainTop,     panelX + 1,      mainBot,      COLOR_SHADOW)
+        drawRect(panelX + panelW - 1, mainTop,     panelX + panelW, mainBot,      COLOR_HILIGHT)
+        drawRect(panelX,              mainBot - 1, panelX + panelW, mainBot,      COLOR_HILIGHT)
 
-        // Hotbar slot holes (1 × 9)
-        val hotbarY = playerY + 3 * SLOT + HGAP
-        for (col in 0 until 9) {
-            slotHole(panelX + LPAD + col * SLOT, hotbarY)
-        }
+        fontRendererObj.drawString("Backpack", panelX + LPAD, mainTop + 6, COLOR_TEXT)
 
-        // Upgrade column — flush against main panel
-        drawRect(guiLeft, guiTop, panelX, guiTop + ySize, COLOR_PANEL)
-        drawRect(guiLeft,           guiTop,              guiLeft + 1,  guiTop + ySize,    COLOR_SHADOW)
-        drawRect(guiLeft,           guiTop,              panelX,       guiTop + 1,        COLOR_SHADOW)
-        drawRect(guiLeft,           guiTop + ySize - 1,  panelX,       guiTop + ySize,    COLOR_HILIGHT)
+        GL11.glColor4f(1f, 1f, 1f, 1f)
+        mc.textureManager.bindTexture(SLOTS_TEX)
+        drawTexturedModalRect(panelX + LPAD - 1, mainTop + TOP - 1, 0, 0, container.rowSize * SLOT, container.colSize * SLOT)
 
-        // Upgrade slot holes
-        for (i in 0 until container.wrapper.upgradeSlotsSize()) {
-            slotHole(guiLeft + USX, guiTop + TOP + i * SLOT)
-        }
-    }
+        // ── Player inventory panel ──────────────────────────────────────────────
+        drawRect(panelX, invTop, panelX + invPanelW, invBot, COLOR_PANEL)
+        drawRect(panelX,                 invTop,     panelX + invPanelW, invTop + 1,  COLOR_SHADOW)
+        drawRect(panelX,                 invTop,     panelX + 1,         invBot,      COLOR_SHADOW)
+        drawRect(panelX + invPanelW - 1, invTop,     panelX + invPanelW, invBot,      COLOR_HILIGHT)
+        drawRect(panelX,                 invBot - 1, panelX + invPanelW, invBot,      COLOR_HILIGHT)
 
-    // Draws a single slot hole: dark 1px outer ring + darker inner fill.
-    // sx/sy are the slot's top-left corner (as placed in the container).
-    private fun slotHole(sx: Int, sy: Int) {
-        drawRect(sx - 1, sy - 1, sx + SLOT - 1, sy + SLOT - 1, COLOR_SHADOW)
-        drawRect(sx,     sy,     sx + SLOT - 2, sy + SLOT - 2, COLOR_SLOT_BG)
+        fontRendererObj.drawString("Inventory", panelX + LPAD, invTop + 5, COLOR_TEXT)
+
+        val playerY  = guiTop + chestH + PGAP
+        val hotbarY  = playerY + 3 * SLOT + HGAP
+        val pSlotX   = panelX + LPAD - 1 + container.playerXOffset
+        GL11.glColor4f(1f, 1f, 1f, 1f)
+        mc.textureManager.bindTexture(SLOTS_TEX)
+        drawTexturedModalRect(pSlotX, playerY - 1, 0, 0, 9 * SLOT, 3 * SLOT)
+        drawTexturedModalRect(pSlotX, hotbarY - 1, 0, 0, 9 * SLOT, SLOT)
     }
 }
