@@ -26,7 +26,7 @@ import org.apache.logging.log4j.LogManager
     name = Tags.MOD_NAME,
     version = Tags.VERSION,
     modLanguageAdapter = "net.shadowfacts.forgelin.KotlinAdapter",
-    dependencies = "required-after:forgelin_continuous"
+    dependencies = "required-after:forgelin"
 )
 object RetroSophisticatedBackpacks {
     val LOGGER = LogManager.getLogger(Tags.MOD_NAME)
