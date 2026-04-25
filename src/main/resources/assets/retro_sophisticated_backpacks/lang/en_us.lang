@@ -1,0 +1,156 @@
+# Blocks
+tile.retro_sophisticated_backpacks.backpack_leather.name=Leather Backpack
+tile.retro_sophisticated_backpacks.backpack_iron.name=Iron Backpack
+tile.retro_sophisticated_backpacks.backpack_gold.name=Gold Backpack
+tile.retro_sophisticated_backpacks.backpack_diamond.name=Diamond Backpack
+tile.retro_sophisticated_backpacks.backpack_obsidian.name=Obsidian Backpack
+
+# Items
+item.retro_sophisticated_backpacks.upgrade_base.name=Upgrade Base
+item.retro_sophisticated_backpacks.stack_upgrade_starter_tier.name=Stack Upgrade Starter Tier
+item.retro_sophisticated_backpacks.stack_upgrade_tier_1.name=Stack Upgrade Tier 1
+item.retro_sophisticated_backpacks.stack_upgrade_tier_2.name=Stack Upgrade Tier 2
+item.retro_sophisticated_backpacks.stack_upgrade_tier_3.name=Stack Upgrade Tier 3
+item.retro_sophisticated_backpacks.stack_upgrade_tier_4.name=Stack Upgrade Tier 4
+item.retro_sophisticated_backpacks.exponential_stack_upgrade.name=Exponential Stack Upgrade
+item.retro_sophisticated_backpacks.crafting_upgrade.name=Crafting Upgrade
+item.retro_sophisticated_backpacks.inception_upgrade.name=Inception Upgrade
+item.retro_sophisticated_backpacks.pickup_upgrade.name=Pickup Upgrade
+item.retro_sophisticated_backpacks.advanced_pickup_upgrade.name=Advanced Pickup Upgrade
+item.retro_sophisticated_backpacks.feeding_upgrade.name=Feeding Upgrade
+item.retro_sophisticated_backpacks.advanced_feeding_upgrade.name=Advanced Feeding Upgrade
+item.retro_sophisticated_backpacks.deposit_upgrade.name=Deposit Upgrade
+item.retro_sophisticated_backpacks.advanced_deposit_upgrade.name=Advanced Deposit Upgrade
+item.retro_sophisticated_backpacks.restock_upgrade.name=Restock Upgrade
+item.retro_sophisticated_backpacks.advanced_restock_upgrade.name=Advanced Restock Upgrade
+item.retro_sophisticated_backpacks.filter_upgrade.name=Filter Upgrade
+item.retro_sophisticated_backpacks.advanced_filter_upgrade.name=Advanced Filter Upgrade
+
+# Creative Tabs
+itemGroup.retro_sophisticated_backpacks.creative_tab=Retro Sophisticated Backpacks
+
+# Keybinds
+retro_sophisticated_backpacks.key.open_backpack.desc=Opens Backpack in Inventory
+retro_sophisticated_backpacks.key.category=Retro Sophisticated Backpacks
+
+# Tooltips
+retro_sophisticated_backpacks.tooltip.backpack.inventory_size=Inventory size: %d
+retro_sophisticated_backpacks.tooltip.backpack.upgrade_slots_size=Upgrade slots: %d
+retro_sophisticated_backpacks.tooltip.backpack.stack_multiplier=-> Stack multiplier: %d %s
+
+retro_sophisticated_backpacks.tooltip.upgrade_base=It does nothing! Feel free to put it in your upgrade slots!
+
+retro_sophisticated_backpacks.tooltip.stack_upgrade=Multiplies stack size by %d
+
+retro_sophisticated_backpacks.tooltip.exponential_stack_upgrade=Stack multipliers will stack by multiplying instead of adding
+
+retro_sophisticated_backpacks.tooltip.crafting_upgrade=Adds additional crafting grid to side of backpack
+
+retro_sophisticated_backpacks.tooltip.inception_upgrade=Allows backpacks to be stored inside backpack
+
+retro_sophisticated_backpacks.tooltip.pickup_upgrade=Allows backpacks to pickup items
+
+retro_sophisticated_backpacks.tooltip.advanced_pickup_upgrade=Allows backpack to pickup items with more configurations
+
+retro_sophisticated_backpacks.tooltip.feeding_upgrade=Allows backpacks to automatically feed player
+
+retro_sophisticated_backpacks.tooltip.advanced_feeding_upgrade=Allows backpack to automatically feed player with more configurations
+
+retro_sophisticated_backpacks.tooltip.deposit_upgrade=Deposits items from backpack into sneak-right-clicked inventory
+
+retro_sophisticated_backpacks.tooltip.advanced_deposit_upgrade=Deposits items from backpack into sneak-right-clicked inventory with more configurations
+
+retro_sophisticated_backpacks.tooltip.restock_upgrade=Restocks items from sneak-right-clicked inventory to backpack
+
+retro_sophisticated_backpacks.tooltip.advanced_restock_upgrade=Restocks items from sneak-right-clicked inventory to backpack with more configurations
+
+retro_sophisticated_backpacks.tooltip.filter_upgrade=Filters inserted items when placing in world
+
+retro_sophisticated_backpacks.tooltip.advanced_filter_upgrade=Filters inserted items when placing in world with more configurations
+
+retro_sophisticated_backpacks.tooltip.shift_to_reveal=<Shift to reveal>
+
+# Gui Elements
+retro_sophisticated_backpacks.container.backpack=Backpack
+
+retro_sophisticated_backpacks.gui.pickup_settings=Pickup Settings
+retro_sophisticated_backpacks.gui.advanced_pickup_settings=Adv. Pickup Settings
+
+retro_sophisticated_backpacks.gui.feeding_settings=Feeding Settings
+retro_sophisticated_backpacks.gui.advanced_feeding_settings=Adv. Feeding Settings
+
+retro_sophisticated_backpacks.gui.deposit_settings=Deposit Settings
+retro_sophisticated_backpacks.gui.advanced_deposit_settings=Adv. Deposit Settings
+
+retro_sophisticated_backpacks.gui.restock_settings=Restock Settings
+retro_sophisticated_backpacks.gui.advanced_restock_settings=Adv. Restock Settings
+
+retro_sophisticated_backpacks.gui.filter_settings=Filter Settings
+retro_sophisticated_backpacks.gui.advanced_filter_settings=Adv. Filter Settings
+
+retro_sophisticated_backpacks.gui.crafting_settings=Crafting
+
+retro_sophisticated_backpacks.gui.memory_settings=Memory Settings
+retro_sophisticated_backpacks.gui.sorting_settings=Sorting Settings
+
+# Gui Tooltips
+retro_sophisticated_backpacks.gui.stack_size_extra=Count: %s / %s
+retro_sophisticated_backpacks.gui.not_in_effect=Not in effect
+
+retro_sophisticated_backpacks.gui.whitelist=Whitelist
+retro_sophisticated_backpacks.gui.blacklist=Blacklist
+
+retro_sophisticated_backpacks.gui.match_item=By Item
+retro_sophisticated_backpacks.gui.match_mod_id=By Mod ID
+retro_sophisticated_backpacks.gui.match_ore_dict=By Ore Dictionary
+
+retro_sophisticated_backpacks.gui.match_durability=Match Durability
+retro_sophisticated_backpacks.gui.ignore_durability=Ignore Durability
+
+retro_sophisticated_backpacks.gui.match_nbt=Match NBT
+retro_sophisticated_backpacks.gui.ignore_nbt=Ignore NBT
+
+retro_sophisticated_backpacks.gui.add_ore_dict_entry=Add Ore Dict.
+retro_sophisticated_backpacks.gui.remove_ore_dict_entry=Remove Ore Dict.
+retro_sophisticated_backpacks.gui.ore_dict_input_help=You can input ore dictionary here,\nregex is supported.
+retro_sophisticated_backpacks.gui.ore_dict_input_help.pro_tip=Protip: You can hover item onto entry\n to check if the entry is applicable,\nor hover on textfield to see available entries.
+retro_sophisticated_backpacks.gui.ore_dict_list_entries=Available ore dict:
+retro_sophisticated_backpacks.gui.none=(None)
+
+retro_sophisticated_backpacks.gui.complete_hunger=Only feed when player is hungry enough\nto not waste any hunger points of the food at all
+retro_sophisticated_backpacks.gui.half_hunger=Only feed when player is hungry enough\nto only waste half hunger points of the food at most
+retro_sophisticated_backpacks.gui.immediate_hunger=Feed as soon as player is tiny bit hungry\nwastes quite a few hunger points of the food
+
+retro_sophisticated_backpacks.gui.ignore_health=Do not consider health\nIgnores player's health and only feeds based on hunger setting
+retro_sophisticated_backpacks.gui.consider_health=Feed player immediately when hurt\nIgnores hunger setting when player is not at max health
+
+retro_sophisticated_backpacks.gui.input_output=Input & Output
+retro_sophisticated_backpacks.gui.input=Input Only
+retro_sophisticated_backpacks.gui.output=Output Only
+
+retro_sophisticated_backpacks.gui.sort_inventory=Sort Backpack Inventory
+retro_sophisticated_backpacks.gui.sort_by_name=Sort By Name
+retro_sophisticated_backpacks.gui.sort_by_mod_id=Sort By Mod ID
+retro_sophisticated_backpacks.gui.sort_by_count=Sort By Count
+retro_sophisticated_backpacks.gui.sort_by_ore_dict=Sort By Ore Dictionary
+
+retro_sophisticated_backpacks.gui.craft_into_backpack=Shift Click Result Into Backpack
+retro_sophisticated_backpacks.gui.craft_into_player_inventory=Shift Click Result Into Player's Inventory
+
+retro_sophisticated_backpacks.gui.transfer_to_player_inv=Transfer All Items to Player Inventory
+retro_sophisticated_backpacks.gui.transfer_to_player_inv_matched_1=Transfer Matched Items to Player Inventory
+retro_sophisticated_backpacks.gui.transfer_to_player_inv_matched_2=Shift To Transfer All
+retro_sophisticated_backpacks.gui.transfer_to_backpack_inv=Transfer All Items to Backpack Inventory
+retro_sophisticated_backpacks.gui.transfer_to_backpack_inv_matched_1=Transfer Matched Items to Backpack Inventory
+retro_sophisticated_backpacks.gui.transfer_to_backpack_inv_matched_2=Shift To Transfer All
+
+retro_sophisticated_backpacks.gui.settings=Settings
+retro_sophisticated_backpacks.gui.configuration_tab=Configuration Tab
+
+retro_sophisticated_backpacks.gui.memorized_slot=Memorized Slot
+retro_sophisticated_backpacks.gui.memorize_all=Memorize All Slots
+retro_sophisticated_backpacks.gui.unmemorize_all=Forget All Slots
+
+retro_sophisticated_backpacks.gui.no_sorting_slot=No Sorting Slot
+retro_sophisticated_backpacks.gui.lock_all_sort=Select All Slots For No Sorting
+retro_sophisticated_backpacks.gui.unlock_all_sort=Select All Slots For Sorting

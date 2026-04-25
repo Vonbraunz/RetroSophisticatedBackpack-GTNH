@@ -1,0 +1,607 @@
+package com.cleanroommc.retrosophisticatedbackpacks.client.gui
+
+import com.cleanroommc.modularui.api.IPanelHandler
+import com.cleanroommc.modularui.api.drawable.IKey
+import com.cleanroommc.modularui.api.widget.Interactable
+import com.cleanroommc.modularui.drawable.AdaptableUITexture
+import com.cleanroommc.modularui.drawable.ItemDrawable
+import com.cleanroommc.modularui.drawable.UITexture
+import com.cleanroommc.modularui.drawable.text.StringKey
+import com.cleanroommc.modularui.screen.ModularPanel
+import com.cleanroommc.modularui.screen.RichTooltip
+import com.cleanroommc.modularui.screen.viewport.ModularGuiContext
+import com.cleanroommc.modularui.theme.WidgetTheme
+import com.cleanroommc.modularui.value.sync.PanelSyncManager
+import com.cleanroommc.modularui.widgets.ButtonWidget
+import com.cleanroommc.modularui.widgets.SlotGroupWidget
+import com.cleanroommc.modularui.widgets.TextWidget
+import com.cleanroommc.modularui.widgets.slot.ItemSlot
+import com.cleanroommc.modularui.widgets.slot.SlotGroup
+import com.cleanroommc.retrosophisticatedbackpacks.Tags
+import com.cleanroommc.retrosophisticatedbackpacks.backpack.BackpackInventoryHelper
+import com.cleanroommc.retrosophisticatedbackpacks.backpack.SortType
+import com.cleanroommc.retrosophisticatedbackpacks.capability.BackpackWrapper
+import com.cleanroommc.retrosophisticatedbackpacks.capability.Capabilities
+import com.cleanroommc.retrosophisticatedbackpacks.capability.upgrade.*
+import com.cleanroommc.retrosophisticatedbackpacks.client.gui.widgets.*
+import com.cleanroommc.retrosophisticatedbackpacks.client.gui.widgets.slot.BackpackSlot
+import com.cleanroommc.retrosophisticatedbackpacks.client.gui.widgets.upgrade.*
+import com.cleanroommc.retrosophisticatedbackpacks.common.gui.BackpackContainer
+import com.cleanroommc.retrosophisticatedbackpacks.common.gui.PlayerInventoryGuiData
+import com.cleanroommc.retrosophisticatedbackpacks.common.gui.slot.CraftingSlotInfo
+import com.cleanroommc.retrosophisticatedbackpacks.common.gui.slot.LockedPlayerSlot
+import com.cleanroommc.retrosophisticatedbackpacks.common.gui.slot.ModularBackpackSlot
+import com.cleanroommc.retrosophisticatedbackpacks.common.gui.slot.ModularUpgradeSlot
+import com.cleanroommc.retrosophisticatedbackpacks.config.ClientConfig
+import com.cleanroommc.retrosophisticatedbackpacks.item.UpgradeItem
+import com.cleanroommc.retrosophisticatedbackpacks.sync.BackpackSH
+import com.cleanroommc.retrosophisticatedbackpacks.sync.BackpackSlotSH
+import com.cleanroommc.retrosophisticatedbackpacks.sync.UpgradeSlotSH
+import com.cleanroommc.retrosophisticatedbackpacks.tileentity.BackpackTileEntity
+import com.cleanroommc.retrosophisticatedbackpacks.util.Utils.asTranslationKey
+import com.cleanroommc.retrosophisticatedbackpacks.util.Utils.ceilDiv
+import net.minecraft.entity.player.EntityPlayer
+import net.minecraft.item.ItemStack
+import net.minecraftforge.fml.common.Loader
+import net.minecraftforge.items.wrapper.PlayerInvWrapper
+import net.minecraftforge.items.wrapper.PlayerMainInvWrapper
+import kotlin.math.min
+
+class BackpackPanel(
+    internal val player: EntityPlayer,
+    internal val tileEntity: BackpackTileEntity?,
+    internal val syncManager: PanelSyncManager,
+    internal val backpackWrapper: BackpackWrapper
+) : ModularPanel("backpack_gui") {
+    companion object {
+        private const val SLOT_SIZE = 18
+        private val LAYERED_TAB_TEXTURE = UITexture.builder()
+            .location(Tags.MOD_ID, "gui/gui_controls")
+            .imageSize(256, 256)
+            .xy(132, 0, 124, 256)
+            .adaptable(4)
+            .tiled()
+            .build() as AdaptableUITexture
+        private val SORT_TYPE_VARIANTS = listOf(
+            CyclicVariantButtonWidget.Variant(
+                IKey.lang("gui.sort_by_name".asTranslationKey()),
+                RSBTextures.SMALL_A_ICON
+            ),
+            CyclicVariantButtonWidget.Variant(
+                IKey.lang("gui.sort_by_mod_id".asTranslationKey()),
+                RSBTextures.SMALL_M_ICON
+            ),
+            CyclicVariantButtonWidget.Variant(
+                IKey.lang("gui.sort_by_count".asTranslationKey()),
+                RSBTextures.SMALL_1_ICON
+            ),
+            CyclicVariantButtonWidget.Variant(
+                IKey.lang("gui.sort_by_ore_dict".asTranslationKey()),
+                RSBTextures.SMALL_O_ICON
+            )
+        )
+
+        internal fun defaultPanel(
+            syncManager: PanelSyncManager,
+            player: EntityPlayer,
+            tileEntity: BackpackTileEntity?,
+            wrapper: BackpackWrapper,
+            width: Int,
+            height: Int,
+            backpackSlotIndex: Int? = null,
+        ): BackpackPanel {
+            val panel =
+                BackpackPanel(player, tileEntity, syncManager, wrapper)
+                    .size(width, height) as BackpackPanel
+
+            syncManager.bindPlayerInventory(player)
+            panel.bindPlayerInventory()
+
+            return panel
+        }
+    }
+
+    val upgradeSlotWidgets = mutableListOf<ItemSlot>()
+    val upgradeSlotGroupWidget = UpgradeSlotGroupWidget(this, backpackWrapper.upgradeSlotsSize())
+    val tabWidgets = mutableListOf<TabWidget>()
+    val rowSize = if (backpackWrapper.backpackInventorySize() > 81) 12 else 9
+    val colSize = backpackWrapper.backpackInventorySize().ceilDiv(rowSize)
+
+    val backpackSyncHandler: BackpackSH = BackpackSH(PlayerMainInvWrapper(player.inventory), backpackWrapper)
+    val backpackSlotSyncHandlers: Array<BackpackSlotSH>
+    val upgradeSlotSyncHandlers: Array<UpgradeSlotSH>
+    val upgradeSlotGroups: Array<UpgradeSlotUpdateGroup>
+
+    val settingPanel: IPanelHandler
+    var isMemorySettingTabOpened: Boolean = false
+    var shouldMemorizeRespectNBT: Boolean = false
+    var isSortingSettingTabOpened: Boolean = false
+
+    init {
+        syncManager.syncValue("backpack_wrapper", backpackSyncHandler)
+
+        // Backpack slots
+        backpackSlotSyncHandlers = Array(backpackWrapper.backpackInventorySize()) {
+            val backpackSlot = ModularBackpackSlot(backpackWrapper, it).slotGroup("backpack_inventory")
+            val syncHandler = BackpackSlotSH(backpackWrapper, backpackSlot)
+
+            syncManager.syncValue("backpack", it, syncHandler)
+            syncHandler
+        }
+
+        syncManager.registerSlotGroup(SlotGroup("backpack_inventory", rowSize, 100, true))
+
+        // Upgrade slots
+        upgradeSlotSyncHandlers = Array(backpackWrapper.upgradeSlotsSize()) {
+            val upgradeSlot = ModularUpgradeSlot(
+                this,
+                backpackWrapper,
+                it
+            ).slotGroup("upgrade_inventory")
+            val syncHandler = UpgradeSlotSH(upgradeSlot)
+            val index = it
+            upgradeSlot.changeListener { lastStack, _, isClient, init ->
+                if (isClient)
+                    updateUpgradeWidgets(index, lastStack)
+            }
+
+            syncManager.syncValue("upgrades", it, syncHandler)
+            syncHandler
+        }
+
+        syncManager.registerSlotGroup(SlotGroup("upgrade_inventory", 1, 99, true))
+
+        // Upgrade slot inventory pre register
+        upgradeSlotGroups = Array(backpackWrapper.upgradeSlotsSize()) {
+            UpgradeSlotUpdateGroup(this, backpackWrapper, it)
+        }
+
+        settingPanel = syncManager.syncedPanel("setting_panel", true) { syncManager, syncHandler ->
+            BackpackSettingPanel(this)
+        }
+    }
+
+    fun getBackpackContainer(): BackpackContainer {
+        return syncManager.container as BackpackContainer
+    }
+
+    // Currently only main hand slot will be locked if it's the backpack being opened
+    internal fun modifyPlayerSlot(
+        syncManager: PanelSyncManager,
+        inventoryType: PlayerInventoryGuiData.InventoryType,
+        slotIndex: Int,
+        player: EntityPlayer
+    ) {
+        // Bauble slot does not exist in backpack screen
+        if (inventoryType == PlayerInventoryGuiData.InventoryType.PLAYER_BAUBLES)
+            return
+
+        syncManager.itemSlot(
+            "player",
+            slotIndex,
+            LockedPlayerSlot(PlayerInvWrapper(player.inventory), slotIndex)
+                .slotGroup("player_inventory")
+        )
+    }
+
+    internal fun addSortingButtons() {
+        val rightAnchor = if (Loader.isModLoaded("bogosorter")) 30 else 7
+
+        val sortTypeButton = CyclicVariantButtonWidget(
+            SORT_TYPE_VARIANTS,
+            backpackWrapper.sortType.ordinal,
+            iconOffset = 0,
+            iconSize = 12
+        ) { mouseButton ->
+            val nextSortType = SortType.entries[mouseButton]
+
+            backpackSyncHandler.setSortType(nextSortType)
+            backpackSyncHandler.syncToServer(BackpackSH.UPDATE_SET_SORT_TYPE) {
+                it.writeEnumValue(nextSortType)
+            }
+        }
+            .setEnabledIf {
+                !settingPanel.isPanelOpen
+            }
+            .top(4)
+            .right(rightAnchor)
+            .size(12)
+        val sortButton = ButtonWidget()
+            .top(4)
+            .right(rightAnchor + 14)
+            .size(12)
+            .overlay(RSBTextures.SOLID_UP_ARROW_ICON)
+            .setEnabledIf {
+                !settingPanel.isPanelOpen
+            }
+            .onMousePressed { mouseButton ->
+                if (mouseButton == 0) {
+                    Interactable.playButtonClickSound()
+                    BackpackInventoryHelper.sortInventory(backpackWrapper)
+                    backpackSyncHandler.syncToServer(BackpackSH.UPDATE_SORT_INV) {
+                        for (i in 0 until backpackWrapper.backpackInventorySize()) {
+                            it.writeItemStack(backpackWrapper.getStackInSlot(i))
+                        }
+                    }
+                    true
+                } else false
+            }
+            .tooltipStatic {
+                it.addLine(IKey.lang("gui.sort_inventory".asTranslationKey()))
+                    .pos(RichTooltip.Pos.NEXT_TO_MOUSE)
+            }
+
+        child(sortButton)
+            .child(sortTypeButton)
+    }
+
+    internal fun addTransferButtons() {
+        val rightAnchor = if (Loader.isModLoaded("bogosorter")) {
+            if (backpackWrapper.backpackInventorySize() > 81) 57
+            else 30
+        } else 7
+
+        val transferToBackpackButton =
+            TransferButtonWidget(RSBTextures.DOT_UP_ARROW_ICON, RSBTextures.SOLID_UP_ARROW_ICON)
+                .top(17 + colSize * 18)
+                .right(rightAnchor)
+                .size(12)
+                .setEnabledIf {
+                    !settingPanel.isPanelOpen
+                }
+                .onMousePressed { mouseButton ->
+                    if (mouseButton == 0) {
+                        val transferMatched = !Interactable.hasShiftDown()
+
+                        Interactable.playButtonClickSound()
+                        backpackSyncHandler.transferToBackpack(transferMatched)
+                        backpackSyncHandler.syncToServer(BackpackSH.UPDATE_TRANSFER_TO_BACKPACK_INV) {
+                            it.writeBoolean(transferMatched)
+                        }
+                        true
+                    } else false
+                }
+                .tooltipAutoUpdate(true)
+                .tooltipDynamic {
+                    if (Interactable.hasShiftDown()) {
+                        it.addLine(IKey.lang("gui.transfer_to_backpack_inv".asTranslationKey()))
+                    } else {
+                        it.addLine(IKey.lang("gui.transfer_to_backpack_inv_matched_1".asTranslationKey()))
+                            .addLine(
+                                IKey.lang("gui.transfer_to_backpack_inv_matched_2".asTranslationKey()).style(IKey.GRAY)
+                            )
+                    }
+
+                    it.pos(RichTooltip.Pos.NEXT_TO_MOUSE)
+                }
+        val transferToPlayerButton =
+            TransferButtonWidget(RSBTextures.DOT_DOWN_ARROW_ICON, RSBTextures.SOLID_DOWN_ARROW_ICON)
+                .top(17 + colSize * 18)
+                .right(rightAnchor + 14)
+                .size(12)
+                .setEnabledIf {
+                    !settingPanel.isPanelOpen
+                }
+                .onMousePressed { mouseButton ->
+                    if (mouseButton == 0) {
+                        val transferMatched = !Interactable.hasShiftDown()
+
+                        Interactable.playButtonClickSound()
+                        backpackSyncHandler.transferToPlayerInventory(transferMatched)
+                        backpackSyncHandler.syncToServer(BackpackSH.UPDATE_TRANSFER_TO_PLAYER_INV) {
+                            it.writeBoolean(transferMatched)
+                        }
+                        true
+                    } else false
+                }
+                .tooltipAutoUpdate(true)
+                .tooltipDynamic {
+                    if (Interactable.hasShiftDown()) {
+                        it.addLine(IKey.lang("gui.transfer_to_player_inv".asTranslationKey()))
+                    } else {
+                        it.addLine(IKey.lang("gui.transfer_to_player_inv_matched_1".asTranslationKey()))
+                            .addLine(
+                                IKey.lang("gui.transfer_to_player_inv_matched_2".asTranslationKey()).style(IKey.GRAY)
+                            )
+                    }
+
+                    it.pos(RichTooltip.Pos.NEXT_TO_MOUSE)
+                }
+
+        child(transferToPlayerButton)
+            .child(transferToBackpackButton)
+    }
+
+    internal fun addBackpackInventorySlots() {
+        val backpackSlotGroupWidget = SlotGroupWidget().name("backpack_inventory")
+        backpackSlotGroupWidget.coverChildren().leftRel(0.5F).top(17)
+
+        for (i in 0 until backpackWrapper.backpackInventorySize()) {
+            val itemSlot = BackpackSlot(this, backpackWrapper)
+                .syncHandler("backpack", i)
+                .pos(i % rowSize * SLOT_SIZE, i / rowSize * SLOT_SIZE)
+                .name("slot_${i}")
+
+            backpackSlotGroupWidget.child(itemSlot)
+        }
+
+        child(backpackSlotGroupWidget)
+    }
+
+    internal fun addUpgradeSlots() {
+        upgradeSlotGroupWidget.name("upgrade_inventory")
+        upgradeSlotGroupWidget.size(23, 10 + backpackWrapper.upgradeSlotsSize() * 18).left(-21)
+
+        for (i in 0 until backpackWrapper.upgradeSlotsSize()) {
+            val itemSlot = ItemSlot().syncHandler("upgrades", i).pos(5, 5 + i * 18).name("slot_${i}")
+
+            upgradeSlotWidgets.add(itemSlot)
+            upgradeSlotGroupWidget.child(itemSlot)
+        }
+
+        child(upgradeSlotGroupWidget)
+    }
+
+    internal fun addSettingTab() {
+        child(SettingTabWidget())
+    }
+
+    internal fun addUpgradeTabs() {
+        for (i in 0 until backpackWrapper.upgradeSlotsSize()) {
+            val tab = TabWidget(i + 1).name("upgrade_tab_${i}")
+
+            tab.isEnabled = false
+            tabWidgets.add(tab)
+        }
+
+        // Allows most-top widget to be drawn on top of any other widgets
+        for (tab in tabWidgets.asReversed()) {
+            child(tab)
+        }
+    }
+
+    internal fun addTexts(player: EntityPlayer) {
+        // TODO: Delegates to itemstack or tileentity's display name
+        child(TextWidget(StringKey(backpackWrapper.getDisplayName().formattedText)).pos(8, 6))
+        child(TextWidget(StringKey(player.inventory.displayName.formattedText)).pos(8, 18 + colSize * 18))
+    }
+
+    private inline fun <reified V : ExpandedUpgradeTabWidget<U>, reified U : UpgradeWrapper<*>> updateAndCheckRecreation(
+        widget: ExpandedTabWidget?,
+        wrapper: U
+    ): Boolean {
+        if (widget is V) {
+            widget.wrapper = wrapper
+            return false
+        }
+        return true
+    }
+
+    private inline fun <reified V : ExpandedUpgradeTabWidget<*>> updateAndCheckRecreation(
+        widget: ExpandedTabWidget?,
+        wrapper: Any
+    ): Boolean {
+        if (widget is V) {
+            return !widget.consumePossibleWrapper(wrapper)
+        }
+        return true
+    }
+
+
+    private fun updateUpgradeWidgets(index: Int?, lastStack: ItemStack?) {
+        var tabIndex = 0
+        var openedTabIndex: Int? = null
+
+        resetTabState()
+
+        for ((slotIndex, slotWidget) in upgradeSlotWidgets.withIndex()) {
+            val stack: ItemStack = slotWidget.slot.stack
+            val item = stack.item
+
+            if (!(item is UpgradeItem && item.hasTab))
+                continue
+
+            val wrapper = stack.getCapability(Capabilities.UPGRADE_CAPABILITY, null) ?: continue
+
+            if (wrapper.isTabOpened) {
+                if (openedTabIndex != null) {
+                    wrapper.isTabOpened = false
+                    upgradeSlotSyncHandlers[slotIndex].syncToServer(UpgradeSlotSH.UPDATE_UPGRADE_TAB_STATE) {
+                        it.writeBoolean(false)
+                    }
+
+                    return
+                }
+
+                openedTabIndex = slotIndex
+            }
+        }
+        // Shifted forward to account for settings tab.
+        var tabDisplayIndex = 1
+
+        // Sync all tabs to their corresponding upgrade
+        for (slotIndex in 0 until backpackWrapper.upgradeSlotsSize()) {
+            val slot = upgradeSlotWidgets[slotIndex]
+            val stack: ItemStack = slot.slot.stack
+            val item = stack.item
+
+            val tabWidget = tabWidgets[tabIndex]
+
+            if (!(item is UpgradeItem && item.hasTab)) {
+                tabWidget.isEnabled = false
+                tabWidget.expandedWidget = null
+                tabIndex++
+                continue
+            }
+
+            val upgradeSlotGroup = upgradeSlotGroups[slotIndex]
+            val wrapper: UpgradeWrapper<*> = stack.getCapability(Capabilities.UPGRADE_CAPABILITY, null) ?: continue
+            tabWidget.showExpanded = wrapper.isTabOpened
+            tabWidget.isEnabled = true
+            // Ensure correct tab position
+            tabWidget.tabOrder = tabDisplayIndex
+            tabWidget.tabIcon = ItemDrawable(slot.slot.stack)
+            tabWidget.tooltip {
+                it.clearText()
+                    .addLine(IKey.str(item.getItemStackDisplayName(stack)))
+                    .pos(RichTooltip.Pos.NEXT_TO_MOUSE)
+            }
+
+            when (wrapper) {
+                is CraftingUpgradeWrapper -> {
+                    upgradeSlotGroup.updateCraftingDelegate(wrapper)
+                    if (updateAndCheckRecreation<CraftingUpgradeWidget, CraftingUpgradeWrapper>(
+                            tabWidget.expandedWidget,
+                            wrapper
+                        )
+                    )
+                        tabWidget.expandedWidget = CraftingUpgradeWidget(slotIndex, wrapper)
+                }
+
+                is AdvancedFeedingUpgradeWrapper -> {
+                    upgradeSlotGroup.updateAdvancedFilterDelegate(wrapper)
+                    if (updateAndCheckRecreation<AdvancedFeedingUpgradeWidget, AdvancedFeedingUpgradeWrapper>(
+                            tabWidget.expandedWidget,
+                            wrapper
+                        )
+                    )
+                        tabWidget.expandedWidget = AdvancedFeedingUpgradeWidget(slotIndex, wrapper)
+                }
+
+                is FeedingUpgradeWrapper -> {
+                    upgradeSlotGroup.updateFilterDelegate(wrapper)
+                    if (updateAndCheckRecreation<FeedingUpgradeWidget, FeedingUpgradeWrapper>(
+                            tabWidget.expandedWidget,
+                            wrapper
+                        )
+                    )
+                        tabWidget.expandedWidget = FeedingUpgradeWidget(slotIndex, wrapper)
+                }
+
+                is AdvancedFilterUpgradeWrapper -> {
+                    upgradeSlotGroup.updateAdvancedFilterDelegate(wrapper)
+                    if (updateAndCheckRecreation<AdvancedFilterUpgradeWidget, AdvancedFilterUpgradeWrapper>(
+                            tabWidget.expandedWidget,
+                            wrapper
+                        )
+                    )
+                        tabWidget.expandedWidget = AdvancedFilterUpgradeWidget(slotIndex, wrapper)
+                }
+
+                is FilterUpgradeWrapper -> {
+                    upgradeSlotGroup.updateFilterDelegate(wrapper)
+                    if (updateAndCheckRecreation<FilterUpgradeWidget, FilterUpgradeWrapper>(
+                            tabWidget.expandedWidget,
+                            wrapper
+                        )
+                    )
+                        tabWidget.expandedWidget = FilterUpgradeWidget(slotIndex, wrapper)
+                }
+
+                is IAdvancedFilterable -> {
+                    upgradeSlotGroup.updateAdvancedFilterDelegate(wrapper)
+                    if (updateAndCheckRecreation<AdvancedExpandedTabWidget<*>>(tabWidget.expandedWidget, wrapper))
+                        tabWidget.expandedWidget = AdvancedExpandedTabWidget(
+                            slotIndex,
+                            wrapper,
+                            stack,
+                            wrapper.settingsLangKey
+                        )
+                }
+
+                is IBasicFilterable -> {
+                    upgradeSlotGroup.updateFilterDelegate(wrapper)
+                    if (updateAndCheckRecreation<BasicExpandedTabWidget<*>>(tabWidget.expandedWidget, wrapper))
+                        tabWidget.expandedWidget = BasicExpandedTabWidget(
+                            slotIndex,
+                            wrapper,
+                            stack,
+                            wrapper.settingsLangKey
+                        )
+                }
+            }
+
+            context.recipeViewerSettings.addExclusionArea(tabWidget.expandedWidget)
+            tabIndex++
+            tabDisplayIndex++
+        }
+
+        if (openedTabIndex != null) {
+            val tabWidget = tabWidgets[openedTabIndex]
+            val upperboundIndex = min(
+                openedTabIndex + (tabWidget.expandedWidget?.coveredTabSize ?: 0),
+                tabWidgets.size
+            )
+
+            for (tabIndex in openedTabIndex + 1 until upperboundIndex) {
+                tabWidgets[tabIndex].isEnabled = false
+            }
+        }
+
+        disableUnusedTabWidgets(tabIndex)
+        syncToggles()
+        scheduleResize()
+    }
+
+    private fun resetTabState() {
+        for (tabWidget in tabWidgets) {
+            if (tabWidget.expandedWidget != null) {
+                context.recipeViewerSettings.removeExclusionArea(tabWidget.expandedWidget)
+            }
+        }
+    }
+
+    private fun disableUnusedTabWidgets(startTabIndex: Int) {
+        for (i in startTabIndex until backpackWrapper.upgradeSlotsSize()) {
+            tabWidgets[i].isEnabled = false
+        }
+    }
+
+    private fun syncToggles() {
+        for (i in 0 until backpackWrapper.upgradeSlotsSize()) {
+            val toggleWidget = upgradeSlotGroupWidget.toggleWidgets[i]
+            val wrapper = toggleWidget.getWrapper()
+
+            if (wrapper != null) {
+                toggleWidget.isToggleEnabled = wrapper.enabled
+                toggleWidget.isEnabled = true
+            } else {
+                toggleWidget.isEnabled = false
+            }
+        }
+    }
+
+    override fun shouldAnimate(): Boolean =
+        ClientConfig.enableAnimation && super.shouldAnimate()
+
+    override fun postDraw(context: ModularGuiContext, transformed: Boolean) {
+        super.postDraw(context, transformed)
+
+        // Nasty hack to draw over upgrade tabs
+        LAYERED_TAB_TEXTURE.draw(context, area.width - 6, 0, 6, area.height, WidgetTheme.getDefault().theme)
+    }
+
+    fun getOpenCraftingUpgradeSlot(): Int? {
+
+        for (slotIndex in 0 until backpackWrapper.upgradeSlotsSize()) {
+            val slot = upgradeSlotWidgets[slotIndex]
+            val stack: ItemStack = slot.slot.stack
+            val item = stack.item
+
+            if (!(item is UpgradeItem && item.hasTab)) {
+                continue
+            }
+
+            val wrapper: UpgradeWrapper<*> = stack.getCapability(Capabilities.UPGRADE_CAPABILITY, null) ?: continue
+
+            if (wrapper is CraftingUpgradeWrapper && wrapper.isTabOpened) {
+                return slotIndex
+            }
+        }
+        return null
+    }
+
+    fun getCraftingInfo(slotIndex: Int): CraftingSlotInfo {
+        return upgradeSlotGroups[slotIndex].craftingInfo
+    }
+}
