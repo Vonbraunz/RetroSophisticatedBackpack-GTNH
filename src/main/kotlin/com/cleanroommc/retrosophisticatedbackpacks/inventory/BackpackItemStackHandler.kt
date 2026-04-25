@@ -4,115 +4,97 @@ import com.cleanroommc.retrosophisticatedbackpacks.capability.BackpackWrapper
 import com.cleanroommc.retrosophisticatedbackpacks.config.Config
 import com.cleanroommc.retrosophisticatedbackpacks.item.BackpackItem
 import net.minecraft.item.ItemStack
-import net.minecraft.util.NonNullList
-import net.minecraftforge.items.ItemHandlerHelper
+import net.minecraftforge.fml.common.registry.GameRegistry
 import kotlin.math.min
 
 class BackpackItemStackHandler(size: Int, private val wrapper: BackpackWrapper) : ExposedItemStackHandler(size) {
-    val memorizedSlotStack: NonNullList<ItemStack> = NonNullList.withSize(size, ItemStack.EMPTY)
+
+    val memorizedSlotStack: ArrayList<ItemStack?> = ArrayList<ItemStack?>(size).also { list -> repeat(size) { list.add(null) } }
     val memorizedSlotRespectNbtList: MutableList<Boolean> = MutableList(size) { false }
     val sortLockedSlots: MutableList<Boolean> = MutableList(size) { false }
 
-    override fun isItemValid(slot: Int, stack: ItemStack): Boolean =
-        if (Config.blacklistedItems.contains(stack.item.registryName?.toString())) false
-        else if (memorizedSlotStack[slot].isEmpty) stack.item !is BackpackItem || wrapper.canNestBackpack()
-        else if (memorizedSlotRespectNbtList[slot]) ItemStack.areItemStacksEqual(stack, memorizedSlotStack[slot])
-        else stack.isItemEqualIgnoreDurability(memorizedSlotStack[slot])
-
-    override fun getStackLimit(slotIndex: Int, stack: ItemStack): Int =
-        stacks[slotIndex].maxStackSize * wrapper.getTotalStackMultiplier()
-
-    /**
-     * Prioritize insertion by tries inserting on memorized slot first.
-     *
-     * Only used by backpack tile entity for other block's insertion interaction, to prevent
-     * gui-based interaction get unexpected insertion result.
-     */
-    fun prioritizedInsertion(slotIndex: Int, stack: ItemStack, simulate: Boolean): ItemStack {
-        val stack = insertItemToMemorySlots(stack, simulate)
-        return insertItem(slotIndex, stack, simulate)
-    }
-
-    fun insertItemToMemorySlots(stack: ItemStack, simulate: Boolean): ItemStack {
-        var stack = stack
-
-        for ((slotIndex, memorizedStack) in memorizedSlotStack.withIndex()) {
-            if (memorizedStack.isEmpty || !ItemStack.areItemsEqual(stack, memorizedStack))
-                continue
-
-            stack = insertItem(slotIndex, stack, simulate)
-
-            if (stack.isEmpty)
-                return stack
+    override fun isItemValid(slot: Int, stack: ItemStack): Boolean {
+        val regName = GameRegistry.findUniqueIdentifierFor(stack.item)?.toString()
+        if (Config.blacklistedItems.contains(regName)) return false
+        val memorized = memorizedSlotStack[slot]
+        return if (memorized == null) {
+            stack.item !is BackpackItem || wrapper.canNestBackpack()
+        } else if (memorizedSlotRespectNbtList[slot]) {
+            ItemStack.areItemStacksEqual(stack, memorized)
+        } else {
+            stack.isItemEqualIgnoreDurability(memorized)
         }
-
-        return stack
     }
 
-    override fun insertItem(slot: Int, stack: ItemStack, simulate: Boolean): ItemStack {
-        if (stack.isEmpty)
-            return ItemStack.EMPTY
+    override fun getStackLimit(slot: Int, stack: ItemStack): Int {
+        val existing = stacks[slot]
+        val base = if (existing != null && existing.stackSize > 0) existing.maxStackSize else stack.maxStackSize
+        return base * wrapper.getTotalStackMultiplier()
+    }
 
+    /** Insert into memorized slots first, then fall back to [slotIndex]. */
+    fun prioritizedInsertion(slotIndex: Int, stack: ItemStack?, simulate: Boolean): ItemStack? {
+        val remaining = insertItemToMemorySlots(stack, simulate)
+        return insertItem(slotIndex, remaining, simulate)
+    }
+
+    fun insertItemToMemorySlots(stack: ItemStack?, simulate: Boolean): ItemStack? {
+        var remaining = stack ?: return null
+        for ((slotIndex, memorized) in memorizedSlotStack.withIndex()) {
+            if (memorized == null || !canStack(remaining, memorized)) continue
+            remaining = insertItem(slotIndex, remaining, simulate) ?: return null
+        }
+        return remaining
+    }
+
+    override fun insertItem(slot: Int, stack: ItemStack?, simulate: Boolean): ItemStack? {
+        if (stack == null || stack.stackSize <= 0) return null
         validateSlotIndex(slot)
+        if (!isItemValid(slot, stack)) return stack
 
         val existing = stacks[slot]
         var limit = getStackLimit(slot, stack)
 
-        if (!existing.isEmpty) {
-            if (!ItemHandlerHelper.canItemStacksStack(stack, existing))
-                return stack
-
-            limit -= existing.count
+        if (existing != null && existing.stackSize > 0) {
+            if (!canStack(stack, existing)) return stack
+            limit -= existing.stackSize
         }
 
         if (limit <= 0) return stack
-
-        val reachedLimit = stack.count > limit
+        val reachedLimit = stack.stackSize > limit
 
         if (!simulate) {
-            if (existing.isEmpty) {
-                stacks[slot] =
-                    if (reachedLimit) ItemHandlerHelper.copyStackWithSize(stack, limit)
-                    else stack
+            if (existing == null || existing.stackSize <= 0) {
+                stacks[slot] = if (reachedLimit) copyWithSize(stack, limit) else stack.copy()
             } else {
-                existing.grow(if (reachedLimit) limit else stack.count)
+                existing.stackSize += if (reachedLimit) limit else stack.stackSize
             }
-
             onContentsChanged(slot)
         }
 
-        return if (reachedLimit) ItemHandlerHelper.copyStackWithSize(stack, stack.count - limit)
-        else ItemStack.EMPTY
+        return if (reachedLimit) copyWithSize(stack, stack.stackSize - limit) else null
     }
 
-    override fun extractItem(slotIndex: Int, amount: Int, simulate: Boolean): ItemStack {
-        if (amount == 0)
-            return ItemStack.EMPTY
+    override fun extractItem(slot: Int, amount: Int, simulate: Boolean): ItemStack? {
+        if (amount == 0) return null
+        validateSlotIndex(slot)
 
-        validateSlotIndex(slotIndex)
+        val stack = stacks[slot]?.takeIf { it.stackSize > 0 } ?: return null
+        val slotMax = stack.maxStackSize * wrapper.getTotalStackMultiplier()
+        val toExtract = min(amount, slotMax)
 
-        val stack = stacks[slotIndex]
-
-        if (stack.isEmpty)
-            return ItemStack.EMPTY
-
-        val slotMaxStackSize = stack.maxStackSize * wrapper.getTotalStackMultiplier()
-        val toExtract = min(amount, slotMaxStackSize)
-
-        if (stack.count <= toExtract) {
+        return if (stack.stackSize <= toExtract) {
             if (!simulate) {
-                stacks[slotIndex] = ItemStack.EMPTY
-                onContentsChanged(slotIndex)
+                stacks[slot] = null
+                onContentsChanged(slot)
             }
-
-            return stack
+            stack.copy()
         } else {
             if (!simulate) {
-                stacks[slotIndex] = ItemHandlerHelper.copyStackWithSize(stack, stack.count - toExtract)
-                onContentsChanged(slotIndex)
+                stacks[slot] = copyWithSize(stack, stack.stackSize - toExtract)
+                onContentsChanged(slot)
             }
-
-            return ItemHandlerHelper.copyStackWithSize(stack, toExtract)
+            copyWithSize(stack, toExtract)
         }
     }
 }

@@ -1,46 +1,44 @@
 package com.cleanroommc.retrosophisticatedbackpacks.item
 
 import com.cleanroommc.retrosophisticatedbackpacks.RetroSophisticatedBackpacks
-import com.cleanroommc.retrosophisticatedbackpacks.capability.Capabilities
+import com.cleanroommc.retrosophisticatedbackpacks.capability.upgrade.UpgradeWrapper
 import com.cleanroommc.retrosophisticatedbackpacks.handler.RegistryHandler
 import com.cleanroommc.retrosophisticatedbackpacks.util.Utils.asTranslationKey
-import net.minecraft.client.util.ITooltipFlag
+import net.minecraft.entity.player.EntityPlayer
 import net.minecraft.item.ItemStack
 import net.minecraft.nbt.NBTTagCompound
-import net.minecraft.util.text.TextComponentTranslation
-import net.minecraft.world.World
+import net.minecraft.util.StatCollector
 
-abstract class UpgradeItem(registryName: String, val hasTab: Boolean = false) : ItemBase() {
+abstract class UpgradeItem(val registryNameStr: String, val hasTab: Boolean = false) : ItemBase() {
     init {
         setCreativeTab(RetroSophisticatedBackpacks.CREATIVE_TAB)
-        setRegistryName(registryName)
-        setTranslationKey(registryName.asTranslationKey())
+        setUnlocalizedName(registryNameStr.asTranslationKey())
 
         Items.ITEMS.add(this)
         RegistryHandler.MODELS.add(this)
     }
 
-    override fun addInformation(stack: ItemStack, worldIn: World?, tooltip: MutableList<String>, flagIn: ITooltipFlag) {
-        tooltip.add(TextComponentTranslation("tooltip.${registryName!!.path}".asTranslationKey()).formattedText)
+    /** Subclasses return a fresh, empty wrapper instance. */
+    abstract fun createWrapper(): UpgradeWrapper<*>
+
+    /** Read the wrapper state from the ItemStack's tag compound. */
+    fun getWrapper(stack: ItemStack): UpgradeWrapper<*> {
+        val wrapper = createWrapper()
+        val nbt = stack.tagCompound
+        if (nbt != null) wrapper.deserializeNBT(nbt)
+        return wrapper
     }
 
-    override fun getNBTShareTag(stack: ItemStack): NBTTagCompound? {
-        var nbt = super.getNBTShareTag(stack)
-        val wrapper = stack.getCapability(Capabilities.UPGRADE_CAPABILITY, null) ?: return nbt
-
-        if (nbt != null) nbt.setTag("Capability", wrapper.serializeNBT())
-        else nbt = wrapper.serializeNBT()
-
-        return nbt
+    /** Persist wrapper state back into the ItemStack's tag compound. */
+    fun saveWrapper(stack: ItemStack, wrapper: UpgradeWrapper<*>) {
+        stack.tagCompound = wrapper.serializeNBT()
     }
 
-    override fun readNBTShareTag(stack: ItemStack, nbt: NBTTagCompound?) {
-        if (nbt == null)
-            return
-
-        val wrapper = stack.getCapability(Capabilities.UPGRADE_CAPABILITY, null) ?: return
-
-        if (nbt.hasKey("Capability")) wrapper.deserializeNBT(nbt.getCompoundTag("Capability"))
-        else wrapper.deserializeNBT(nbt)
+    // 1.7.10 addInformation signature: (ItemStack, EntityPlayer, List, Boolean)
+    @Suppress("UNCHECKED_CAST", "OVERRIDE_DEPRECATION")
+    override fun addInformation(stack: ItemStack, player: EntityPlayer?, tooltip: MutableList<*>, advanced: Boolean) {
+        (tooltip as MutableList<String>).add(
+            StatCollector.translateToLocal("tooltip.${registryNameStr}".asTranslationKey())
+        )
     }
 }

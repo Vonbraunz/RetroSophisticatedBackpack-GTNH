@@ -1,45 +1,38 @@
 package com.cleanroommc.retrosophisticatedbackpacks.capability
 
 import com.cleanroommc.retrosophisticatedbackpacks.backpack.SortType
+import com.cleanroommc.retrosophisticatedbackpacks.capability.upgrade.*
 import com.cleanroommc.retrosophisticatedbackpacks.inventory.BackpackItemStackHandler
 import com.cleanroommc.retrosophisticatedbackpacks.inventory.UpgradeItemStackHandler
 import com.cleanroommc.retrosophisticatedbackpacks.item.BackpackItem
 import com.cleanroommc.retrosophisticatedbackpacks.item.ExponentialStackUpgradeItem
 import com.cleanroommc.retrosophisticatedbackpacks.item.InceptionUpgradeItem
 import com.cleanroommc.retrosophisticatedbackpacks.item.StackUpgradeItem
+import com.cleanroommc.retrosophisticatedbackpacks.item.UpgradeItem
 import com.cleanroommc.retrosophisticatedbackpacks.util.BackpackItemStackHelper
 import com.cleanroommc.retrosophisticatedbackpacks.util.Utils.asTranslationKey
 import net.minecraft.entity.player.EntityPlayer
 import net.minecraft.item.ItemStack
 import net.minecraft.nbt.NBTTagCompound
-import net.minecraft.util.EnumFacing
-import net.minecraft.util.text.ITextComponent
-import net.minecraft.util.text.TextComponentTranslation
-import net.minecraftforge.common.capabilities.Capability
 import net.minecraftforge.common.util.INBTSerializable
-import net.minecraftforge.items.CapabilityItemHandler
-import net.minecraftforge.items.IItemHandler
 import java.util.*
 
 class BackpackWrapper(
     var backpackInventorySize: () -> Int = { 27 },
     var upgradeSlotsSize: () -> Int = { 1 },
     var uuid: UUID = UUID.randomUUID(),
-) : IItemHandler, ISidelessCapabilityProvider, INBTSerializable<NBTTagCompound> {
+) : INBTSerializable<NBTTagCompound> {
     companion object {
         private const val BACKPACK_INVENTORY_TAG = "BackpackInventory"
         private const val UPGRADE_SLOTS_TAG = "UpgradeSlots"
         private const val BACKPACK_INVENTORY_SIZE_TAG = "BackpackInventorySize"
         private const val UPGRADE_SLOTS_SIZE_TAG = "UpgradeSlotsSize"
-
         private const val MAIN_COLOR_TAG = "MainColor"
         private const val ACCENT_COLOR_TAG = "AccentColor"
-        
         private const val MEMORY_STACK_ITEMS_TAG = "MemoryItems"
         private const val MEMORY_STACK_RESPECT_NBT_TAG = "MemoryRespectNBT"
         private const val SORT_TYPE_TAG = "SortType"
         private const val LOCKED_SLOTS_TAG = "LockedSlots"
-
         private const val UUID_TAG = "UUID"
 
         const val DEFAULT_MAIN_COLOR: Int = -0x339ec6
@@ -50,159 +43,138 @@ class BackpackWrapper(
     var backpackItemStackHandler = BackpackItemStackHandler(backpackInventorySize(), this)
     var upgradeItemStackHandler = UpgradeItemStackHandler(upgradeSlotsSize())
     var sortType: SortType = SortType.BY_NAME
-
     var mainColor = DEFAULT_MAIN_COLOR
     var accentColor = DEFAULT_ACCENT_COLOR
 
+    // ---------- Upgrade dispatch ----------
+
+    /** Gather all upgrade wrappers from the upgrade slots that implement [T]. */
+    inline fun <reified T : Any> gatherUpgrades(): List<T> =
+        upgradeItemStackHandler.inventory
+            .filterNotNull()
+            .filter { it.stackSize > 0 }
+            .mapNotNull { stack -> (stack.item as? UpgradeItem)?.getWrapper(stack) as? T }
+
+    // ---------- Stack multiplier helpers ----------
+
     fun isStackedByMultiplication(): Boolean =
-        upgradeItemStackHandler.inventory.map(ItemStack::getItem).filterIsInstance<ExponentialStackUpgradeItem>().any()
+        upgradeItemStackHandler.inventory.filterNotNull()
+            .map { it.item }.filterIsInstance<ExponentialStackUpgradeItem>().any()
 
     private fun getStackMultiplyFunction(condition: Boolean): (Int, Int) -> Int =
-        if (condition) Int::times
-        else Int::plus
+        if (condition) Int::times else Int::plus
 
-    fun getTotalStackMultiplier(): Int =
-        getTotalStackMultiplier(isStackedByMultiplication())
+    fun getTotalStackMultiplier(): Int = getTotalStackMultiplier(isStackedByMultiplication())
 
     fun getTotalStackMultiplier(condition: Boolean): Int {
         val base = if (condition) 1 else 0
-        val stackUpgradeItems = upgradeItemStackHandler.inventory
-            .map(ItemStack::getItem)
-            .filterIsInstance<StackUpgradeItem>()
+        val stackUpgradeItems = upgradeItemStackHandler.inventory.filterNotNull()
+            .map { it.item }.filterIsInstance<StackUpgradeItem>()
         val func = getStackMultiplyFunction(condition)
-
-        if (!condition && stackUpgradeItems.isEmpty())
-            return 1
-
+        if (!condition && stackUpgradeItems.isEmpty()) return 1
         return stackUpgradeItems.fold(base) { acc, item -> func(acc, item.multiplier()) }
     }
 
     fun canAddStackUpgrade(newMultiplier: Int): Boolean {
-        // Ensures no overflow for vanilla itemstack, no guarantee for modded itemstack
-        val currentMultiplier = getTotalStackMultiplier() * 64
-
-        try {
-            Math.multiplyExact(currentMultiplier, newMultiplier)
-
-            return true
-        } catch (_: ArithmeticException) {
-            return false
-        }
+        return try {
+            Math.multiplyExact(getTotalStackMultiplier() * 64, newMultiplier)
+            true
+        } catch (_: ArithmeticException) { false }
     }
 
-    fun canRemoveStackUpgrade(originalMultiplier: Int): Boolean =
-        canReplaceStackUpgrade(originalMultiplier, 1)
+    fun canRemoveStackUpgrade(originalMultiplier: Int): Boolean = canReplaceStackUpgrade(originalMultiplier, 1)
 
     fun canReplaceStackUpgrade(oldMultiplier: Int, newMultiplier: Int): Boolean {
-        val newStackMultiplier = getTotalStackMultiplier() / oldMultiplier * newMultiplier
-
+        val newMult = getTotalStackMultiplier() / oldMultiplier * newMultiplier
         for (stack in backpackItemStackHandler.inventory) {
-            if (stack.isEmpty)
-                continue
-
-            if (stack.count > stack.maxStackSize * newStackMultiplier)
-                return false
+            if (stack == null || stack.stackSize <= 0) continue
+            if (stack.stackSize > stack.maxStackSize * newMult) return false
         }
-
         return true
     }
 
     fun canAddExponentialStackUpgrade(): Boolean {
-        try {
-            upgradeItemStackHandler.inventory.map(ItemStack::getItem).filterIsInstance<StackUpgradeItem>()
+        return try {
+            upgradeItemStackHandler.inventory.filterNotNull()
+                .map { it.item }.filterIsInstance<StackUpgradeItem>()
                 .fold(64) { acc, item -> Math.multiplyExact(acc, item.multiplier()) }
-
-            return true
-        } catch (_: ArithmeticException) {
-            return false
-        }
+            true
+        } catch (_: ArithmeticException) { false }
     }
 
     fun canRemoveExponentialStackUpgrade(): Boolean {
         val byAddMultiplier = getTotalStackMultiplier(false)
-
         for (stack in backpackItemStackHandler.inventory) {
-            if (stack.isEmpty)
-                continue
-
-            if (stack.count > stack.maxStackSize * byAddMultiplier)
-                return false
+            if (stack == null || stack.stackSize <= 0) continue
+            if (stack.stackSize > stack.maxStackSize * byAddMultiplier) return false
         }
-
         return true
     }
 
     fun canNestBackpack(): Boolean =
-        upgradeItemStackHandler.inventory.map(ItemStack::getItem).filterIsInstance<InceptionUpgradeItem>().any()
+        upgradeItemStackHandler.inventory.filterNotNull()
+            .map { it.item }.filterIsInstance<InceptionUpgradeItem>().any()
 
     fun canRemoveInceptionUpgrade(): Boolean =
-        !backpackItemStackHandler.inventory.map(ItemStack::getItem).filterIsInstance<BackpackItem>().any() ||
-                upgradeItemStackHandler.inventory.map(ItemStack::getItem).filterIsInstance<InceptionUpgradeItem>()
-                    .count() > 1
+        !backpackItemStackHandler.inventory.filterNotNull()
+            .map { it.item }.filterIsInstance<BackpackItem>().any() ||
+                upgradeItemStackHandler.inventory.filterNotNull()
+                    .map { it.item }.filterIsInstance<InceptionUpgradeItem>().count() > 1
+
+    // ---------- Upgrade functionality ----------
 
     fun canPickupItem(stack: ItemStack): Boolean =
-        gatherCapabilityUpgrades(Capabilities.IPICKUP_UPGRADE_CAPABILITY)
-            .any { it.canPickup(stack) }
+        gatherUpgrades<IPickupUpgrade>().any { it.canPickup(stack) }
 
-    fun feed(entity: EntityPlayer, handler: IItemHandler): Boolean {
-        val feedingUpgrades = gatherCapabilityUpgrades(Capabilities.IFEEDING_UPGRADE_CAPABILITY)
-
-        for (upgrade in feedingUpgrades)
+    fun feed(entity: EntityPlayer, handler: BackpackItemStackHandler): Boolean {
+        for (upgrade in gatherUpgrades<IFeedingUpgrade>())
             return upgrade.feed(entity, handler)
-
         return false
     }
 
     fun canDeposit(slotIndex: Int): Boolean {
-        val stack = getStackInSlot(slotIndex)
-        return gatherCapabilityUpgrades(Capabilities.IDEPOSIT_UPGRADE_CAPABILITY)
-            .any { it.canDeposit(stack) }
+        val stack = getStackInSlot(slotIndex) ?: return false
+        return gatherUpgrades<IDepositUpgrade>().any { it.canDeposit(stack) }
     }
 
     fun canRestock(stack: ItemStack): Boolean =
-        gatherCapabilityUpgrades(Capabilities.IRESTOCK_UPGRADE_CAPABILITY)
-            .any { it.canRestock(stack) }
+        gatherUpgrades<IRestockUpgrade>().any { it.canRestock(stack) }
 
     fun canInsert(stack: ItemStack): Boolean {
-        val filterUpgrades = gatherCapabilityUpgrades(Capabilities.IFILTER_UPGRADE_CAPABILITY)
-            .filter { it.enabled }
-
-        return if (filterUpgrades.isEmpty()) true
-        else filterUpgrades.any { it.canInsert(stack) }
+        val filterUpgrades = gatherUpgrades<IFilterUpgrade>().filter { it.enabled }
+        return if (filterUpgrades.isEmpty()) true else filterUpgrades.any { it.canInsert(stack) }
     }
 
     fun canExtract(slotIndex: Int): Boolean {
-        val stack = getStackInSlot(slotIndex)
-        val filterUpgrades = gatherCapabilityUpgrades(Capabilities.IFILTER_UPGRADE_CAPABILITY)
-            .filter { it.enabled }
-
-        return if (filterUpgrades.isEmpty()) true
-        else filterUpgrades.any { it.canInsert(stack) }
+        val stack = getStackInSlot(slotIndex) ?: return true
+        val filterUpgrades = gatherUpgrades<IFilterUpgrade>().filter { it.enabled }
+        return if (filterUpgrades.isEmpty()) true else filterUpgrades.any { it.canInsert(stack) }
     }
 
-    // Setting related
+    // ---------- Slot access ----------
+
+    fun getSlots(): Int = backpackItemStackHandler.slots
+    fun getStackInSlot(index: Int): ItemStack? = backpackItemStackHandler.getStackInSlot(index)
+    fun insertItem(slot: Int, stack: ItemStack?, simulate: Boolean): ItemStack? = backpackItemStackHandler.insertItem(slot, stack, simulate)
+    fun extractItem(slot: Int, amount: Int, simulate: Boolean): ItemStack? = backpackItemStackHandler.extractItem(slot, amount, simulate)
+
+    // ---------- Memory / lock settings ----------
 
     fun isSlotMemorized(slotIndex: Int): Boolean =
-        !backpackItemStackHandler.memorizedSlotStack[slotIndex].isEmpty
+        backpackItemStackHandler.memorizedSlotStack[slotIndex] != null
 
-    fun getMemorizedStack(slotIndex: Int): ItemStack =
+    fun getMemorizedStack(slotIndex: Int): ItemStack? =
         backpackItemStackHandler.memorizedSlotStack[slotIndex]
 
     fun setMemoryStack(slotIndex: Int, respectNBT: Boolean) {
-        val currentStack = getStackInSlot(slotIndex)
-
-        if (currentStack.isEmpty)
-            return
-
-        val copiedStack = currentStack.copy()
-        copiedStack.count = 1
-
-        backpackItemStackHandler.memorizedSlotStack[slotIndex] = copiedStack
+        val current = getStackInSlot(slotIndex) ?: return
+        val copy = current.copy().also { it.stackSize = 1 }
+        backpackItemStackHandler.memorizedSlotStack[slotIndex] = copy
         backpackItemStackHandler.memorizedSlotRespectNbtList[slotIndex] = respectNBT
     }
 
     fun unsetMemoryStack(slotIndex: Int) {
-        backpackItemStackHandler.memorizedSlotStack[slotIndex] = ItemStack.EMPTY
+        backpackItemStackHandler.memorizedSlotStack[slotIndex] = null
         backpackItemStackHandler.memorizedSlotRespectNbtList[slotIndex] = false
     }
 
@@ -213,44 +185,18 @@ class BackpackWrapper(
         backpackItemStackHandler.memorizedSlotRespectNbtList[slotIndex] = respect
     }
 
-    fun isSlotLocked(slotIndex: Int): Boolean =
-        backpackItemStackHandler.sortLockedSlots[slotIndex]
+    fun isSlotLocked(slotIndex: Int): Boolean = backpackItemStackHandler.sortLockedSlots[slotIndex]
+    fun setSlotLocked(slotIndex: Int, locked: Boolean) { backpackItemStackHandler.sortLockedSlots[slotIndex] = locked }
 
-    fun setSlotLocked(slotIndex: Int, locked: Boolean) {
-        backpackItemStackHandler.sortLockedSlots[slotIndex] = locked
-    }
-
-    // This is only meant to used for bogosorter as RSB already implemented a sorting mechanism
     fun getSortableSlotIndexes(): List<Int> =
-        (0..<backpackInventorySize()).filter { !backpackItemStackHandler.sortLockedSlots[it] && backpackItemStackHandler.memorizedSlotStack[it].isEmpty }
+        (0 until backpackInventorySize()).filter {
+            !backpackItemStackHandler.sortLockedSlots[it] &&
+                    backpackItemStackHandler.memorizedSlotStack[it] == null
+        }
 
-    // Overrides
+    fun getDisplayName(): String = "container.backpack".asTranslationKey()
 
-    fun getDisplayName(): ITextComponent =
-        TextComponentTranslation("container.backpack".asTranslationKey())
-
-    private fun <T> gatherCapabilityUpgrades(capability: Capability<T>): List<T> =
-        upgradeItemStackHandler.inventory
-            .mapNotNull { it.getCapability(capability, null) }
-
-    override fun getSlots(): Int =
-        backpackItemStackHandler.slots
-
-    override fun getStackInSlot(index: Int): ItemStack =
-        backpackItemStackHandler.getStackInSlot(index)
-
-    override fun insertItem(slot: Int, stack: ItemStack, simulate: Boolean): ItemStack =
-        backpackItemStackHandler.insertItem(slot, stack, simulate)
-
-    override fun extractItem(slot: Int, amount: Int, simulate: Boolean): ItemStack =
-        backpackItemStackHandler.extractItem(slot, amount, simulate)
-
-    override fun getSlotLimit(slot: Int): Int =
-        backpackItemStackHandler.getSlotLimit(slot)
-
-    override fun hasCapability(capability: Capability<*>, facing: EnumFacing?): Boolean =
-        capability == Capabilities.BACKPACK_CAPABILITY ||
-                capability == CapabilityItemHandler.ITEM_HANDLER_CAPABILITY
+    // ---------- NBT ----------
 
     override fun serializeNBT(): NBTTagCompound {
         val nbt = NBTTagCompound()
@@ -262,11 +208,8 @@ class BackpackWrapper(
         nbt.setTag(UPGRADE_SLOTS_TAG, upgradesNbt)
         nbt.setInteger(BACKPACK_INVENTORY_SIZE_TAG, backpackInventorySize())
         nbt.setInteger(UPGRADE_SLOTS_SIZE_TAG, upgradeSlotsSize())
-        
         nbt.setInteger(MAIN_COLOR_TAG, mainColor)
         nbt.setInteger(ACCENT_COLOR_TAG, accentColor)
-
-        // Settings
         val memoryNbt = NBTTagCompound()
         BackpackItemStackHelper.saveAllSlotsExtended(memoryNbt, backpackItemStackHandler.memorizedSlotStack)
         nbt.setTag(MEMORY_STACK_ITEMS_TAG, memoryNbt)
@@ -275,56 +218,29 @@ class BackpackWrapper(
             backpackItemStackHandler.memorizedSlotRespectNbtList.map { if (it) 1.toByte() else 0 }.toByteArray()
         )
         nbt.setByte(SORT_TYPE_TAG, sortType.ordinal.toByte())
-
         nbt.setByteArray(
             LOCKED_SLOTS_TAG,
             backpackItemStackHandler.sortLockedSlots.map { if (it) 1 else 0 }.map(Int::toByte).toByteArray()
         )
-
         nbt.setUniqueId(UUID_TAG, uuid)
         return nbt
     }
 
     override fun deserializeNBT(nbt: NBTTagCompound) {
-        if (nbt.hasKey(BACKPACK_INVENTORY_SIZE_TAG))
-            backpackInventorySize = { nbt.getInteger(BACKPACK_INVENTORY_SIZE_TAG) }
-        if (nbt.hasKey(UPGRADE_SLOTS_SIZE_TAG))
-            upgradeSlotsSize = { nbt.getInteger(UPGRADE_SLOTS_SIZE_TAG) }
-
-        uuid = nbt.getUniqueId(UUID_TAG)!!
-
+        if (nbt.hasKey(BACKPACK_INVENTORY_SIZE_TAG)) backpackInventorySize = { nbt.getInteger(BACKPACK_INVENTORY_SIZE_TAG) }
+        if (nbt.hasKey(UPGRADE_SLOTS_SIZE_TAG)) upgradeSlotsSize = { nbt.getInteger(UPGRADE_SLOTS_SIZE_TAG) }
+        uuid = nbt.getUniqueId(UUID_TAG) ?: UUID.randomUUID()
         backpackItemStackHandler = BackpackItemStackHandler(backpackInventorySize(), this)
         upgradeItemStackHandler = UpgradeItemStackHandler(upgradeSlotsSize())
-        
         mainColor = nbt.getInteger(MAIN_COLOR_TAG)
         accentColor = nbt.getInteger(ACCENT_COLOR_TAG)
-
         if (nbt.hasKey(BACKPACK_INVENTORY_TAG))
-            BackpackItemStackHelper.loadAllItemsExtended(
-                nbt.getCompoundTag(BACKPACK_INVENTORY_TAG),
-                backpackItemStackHandler.inventory
-            )
-
+            BackpackItemStackHelper.loadAllItemsExtended(nbt.getCompoundTag(BACKPACK_INVENTORY_TAG), backpackItemStackHandler.inventory)
         if (nbt.hasKey(UPGRADE_SLOTS_TAG))
-            BackpackItemStackHelper.loadAllItemsExtended(
-                nbt.getCompoundTag(UPGRADE_SLOTS_TAG),
-                upgradeItemStackHandler.inventory
-            )
-
-        // Settings
-        BackpackItemStackHelper.loadAllItemsExtended(
-            nbt.getCompoundTag(MEMORY_STACK_ITEMS_TAG),
-            backpackItemStackHandler.memorizedSlotStack
-        )
-
-        nbt.getByteArray(MEMORY_STACK_RESPECT_NBT_TAG).forEachIndexed { index, b ->
-            setMemoryStackRespectNBT(index, b.toInt() != 0)
-        }
-
-        nbt.getByteArray(LOCKED_SLOTS_TAG).forEachIndexed { index, b ->
-            setSlotLocked(index, b.toInt() != 0)
-        }
-
+            BackpackItemStackHelper.loadAllItemsExtended(nbt.getCompoundTag(UPGRADE_SLOTS_TAG), upgradeItemStackHandler.inventory)
+        BackpackItemStackHelper.loadAllItemsExtended(nbt.getCompoundTag(MEMORY_STACK_ITEMS_TAG), backpackItemStackHandler.memorizedSlotStack)
+        nbt.getByteArray(MEMORY_STACK_RESPECT_NBT_TAG).forEachIndexed { i, b -> setMemoryStackRespectNBT(i, b.toInt() != 0) }
+        nbt.getByteArray(LOCKED_SLOTS_TAG).forEachIndexed { i, b -> setSlotLocked(i, b.toInt() != 0) }
         sortType = SortType.entries[nbt.getByte(SORT_TYPE_TAG).toInt()]
     }
 }

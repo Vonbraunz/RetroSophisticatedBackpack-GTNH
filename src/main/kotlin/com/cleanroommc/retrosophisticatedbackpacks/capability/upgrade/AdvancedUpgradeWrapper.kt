@@ -6,8 +6,6 @@ import net.minecraft.item.ItemStack
 import net.minecraft.nbt.NBTTagCompound
 import net.minecraft.nbt.NBTTagList
 import net.minecraft.nbt.NBTTagString
-import net.minecraft.util.EnumFacing
-import net.minecraftforge.common.capabilities.Capability
 import net.minecraftforge.common.util.Constants
 
 abstract class AdvancedUpgradeWrapper<T> : UpgradeWrapper<T>(), IToggleable, IAdvancedFilterable where T : UpgradeItem {
@@ -19,13 +17,7 @@ abstract class AdvancedUpgradeWrapper<T> : UpgradeWrapper<T>(), IToggleable, IAd
     override var ignoreDurability = true
     override var ignoreNBT = true
 
-    override fun checkFilter(stack: ItemStack): Boolean =
-        enabled && super.checkFilter(stack)
-
-    override fun hasCapability(capability: Capability<*>, facing: EnumFacing?): Boolean =
-        super<IToggleable>.hasCapability(capability, facing) ||
-                super<IAdvancedFilterable>.hasCapability(capability, facing) ||
-                super<UpgradeWrapper>.hasCapability(capability, facing)
+    override fun checkFilter(stack: ItemStack): Boolean = enabled && super.checkFilter(stack)
 
     override fun serializeNBT(): NBTTagCompound {
         val nbt = super.serializeNBT()
@@ -35,12 +27,8 @@ abstract class AdvancedUpgradeWrapper<T> : UpgradeWrapper<T>(), IToggleable, IAd
         nbt.setByte(IAdvancedFilterable.MATCH_TYPE_TAG, matchType.ordinal.toByte())
         nbt.setBoolean(IAdvancedFilterable.IGNORE_DURABILITY_TAG, ignoreDurability)
         nbt.setBoolean(IAdvancedFilterable.IGNORE_NBT_TAG, ignoreNBT)
-
         val oreDictList = NBTTagList()
-
-        for (entry in oreDictEntries)
-            oreDictList.appendTag(NBTTagString(entry))
-
+        for (entry in oreDictEntries) oreDictList.appendTag(NBTTagString(entry))
         nbt.setTag(IAdvancedFilterable.ORE_DICT_LIST_TAG, oreDictList)
         return nbt
     }
@@ -53,10 +41,8 @@ abstract class AdvancedUpgradeWrapper<T> : UpgradeWrapper<T>(), IToggleable, IAd
         matchType = IAdvancedFilterable.MatchType.entries[nbt.getByte(IAdvancedFilterable.MATCH_TYPE_TAG).toInt()]
         ignoreDurability = nbt.getBoolean(IAdvancedFilterable.IGNORE_DURABILITY_TAG)
         ignoreNBT = nbt.getBoolean(IAdvancedFilterable.IGNORE_NBT_TAG)
-
         val oreDictList = nbt.getTagList(IAdvancedFilterable.ORE_DICT_LIST_TAG, Constants.NBT.TAG_STRING)
-
-        for (stringNBT in oreDictList)
-            oreDictEntries.add((stringNBT as NBTTagString).string)
+        for (i in 0 until oreDictList.tagCount())
+            oreDictEntries.add((oreDictList.get(i) as NBTTagString).func_150285_a_())
     }
 }

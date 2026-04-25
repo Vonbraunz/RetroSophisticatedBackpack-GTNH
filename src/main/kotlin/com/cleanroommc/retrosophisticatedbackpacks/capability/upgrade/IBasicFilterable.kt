@@ -1,11 +1,8 @@
 package com.cleanroommc.retrosophisticatedbackpacks.capability.upgrade
 
-import com.cleanroommc.retrosophisticatedbackpacks.capability.Capabilities
 import com.cleanroommc.retrosophisticatedbackpacks.capability.ISidelessCapabilityProvider
 import com.cleanroommc.retrosophisticatedbackpacks.inventory.ExposedItemStackHandler
 import net.minecraft.item.ItemStack
-import net.minecraft.util.EnumFacing
-import net.minecraftforge.common.capabilities.Capability
 
 interface IBasicFilterable : ISidelessCapabilityProvider {
     companion object {
@@ -17,12 +14,9 @@ interface IBasicFilterable : ISidelessCapabilityProvider {
     var filterType: FilterType
 
     fun checkFilter(stack: ItemStack): Boolean = when (filterType) {
-        FilterType.WHITELIST -> filterItems.inventory.any { ItemStack.areItemsEqualIgnoreDurability(it, stack) }
-        FilterType.BLACKLIST -> filterItems.inventory.none { ItemStack.areItemsEqualIgnoreDurability(it, stack) }
+        FilterType.WHITELIST -> filterItems.inventory.any { it != null && it.isItemEqualIgnoreDurability(stack) }
+        FilterType.BLACKLIST -> filterItems.inventory.none { it != null && it.isItemEqualIgnoreDurability(stack) }
     }
-
-    override fun hasCapability(capability: Capability<*>, facing: EnumFacing?): Boolean =
-        capability == Capabilities.BASIC_FILTERABLE_CAPABILITY
 
     enum class FilterType {
         WHITELIST,
@@ -36,7 +30,6 @@ interface IBasicFilterable : ISidelessCapabilityProvider {
             get() = FilterType.WHITELIST
             set(_) {}
 
-        override fun checkFilter(itemStack: ItemStack): Boolean =
-            false
+        override fun checkFilter(itemStack: ItemStack): Boolean = false
     }
 }
