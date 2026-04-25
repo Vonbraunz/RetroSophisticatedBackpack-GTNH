@@ -6,7 +6,6 @@ import com.cleanroommc.retrosophisticatedbackpacks.handler.RegistryHandler
 import com.cleanroommc.retrosophisticatedbackpacks.util.Utils.asTranslationKey
 import net.minecraft.entity.player.EntityPlayer
 import net.minecraft.item.ItemStack
-import net.minecraft.nbt.NBTTagCompound
 import net.minecraft.util.StatCollector
 
 abstract class UpgradeItem(val registryNameStr: String, val hasTab: Boolean = false) : ItemBase() {
@@ -18,12 +17,12 @@ abstract class UpgradeItem(val registryNameStr: String, val hasTab: Boolean = fa
         RegistryHandler.MODELS.add(this)
     }
 
-    /** Subclasses return a fresh, empty wrapper instance. */
-    abstract fun createWrapper(): UpgradeWrapper<*>
+    /** Subclasses return a fresh, empty wrapper instance, or null if the item has no wrapper. */
+    open fun createWrapper(): UpgradeWrapper<*>? = null
 
-    /** Read the wrapper state from the ItemStack's tag compound. */
-    fun getWrapper(stack: ItemStack): UpgradeWrapper<*> {
-        val wrapper = createWrapper()
+    /** Read the wrapper state from the ItemStack's tag compound, or null if the item has no wrapper. */
+    fun getWrapper(stack: ItemStack): UpgradeWrapper<*>? {
+        val wrapper = createWrapper() ?: return null
         val nbt = stack.tagCompound
         if (nbt != null) wrapper.deserializeNBT(nbt)
         return wrapper

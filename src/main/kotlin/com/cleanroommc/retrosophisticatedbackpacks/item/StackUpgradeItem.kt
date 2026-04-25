@@ -1,18 +1,15 @@
 package com.cleanroommc.retrosophisticatedbackpacks.item
 
 import com.cleanroommc.retrosophisticatedbackpacks.util.Utils.asTranslationKey
-import net.minecraft.client.util.ITooltipFlag
+import net.minecraft.entity.player.EntityPlayer
 import net.minecraft.item.ItemStack
-import net.minecraft.util.text.TextComponentTranslation
-import net.minecraft.world.World
+import net.minecraft.util.StatCollector
 
 class StackUpgradeItem(registryName: String, val multiplier: () -> Int) : UpgradeItem(registryName) {
-    override fun addInformation(
-        stack: ItemStack,
-        worldIn: World?,
-        tooltip: MutableList<String>,
-        flagIn: ITooltipFlag
-    ) {
-        tooltip.add(TextComponentTranslation("tooltip.stack_upgrade".asTranslationKey(), multiplier()).formattedText)
+    @Suppress("UNCHECKED_CAST", "OVERRIDE_DEPRECATION")
+    override fun addInformation(stack: ItemStack, player: EntityPlayer?, tooltip: MutableList<*>, advanced: Boolean) {
+        (tooltip as MutableList<String>).add(
+            StatCollector.translateToLocalFormatted("tooltip.stack_upgrade".asTranslationKey(), multiplier())
+        )
     }
 }

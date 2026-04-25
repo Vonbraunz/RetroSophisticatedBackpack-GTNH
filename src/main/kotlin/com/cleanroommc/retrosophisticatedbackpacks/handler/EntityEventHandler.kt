@@ -1,120 +1,78 @@
 package com.cleanroommc.retrosophisticatedbackpacks.handler
 
-import baubles.api.BaublesApi
-import com.cleanroommc.retrosophisticatedbackpacks.RetroSophisticatedBackpacks
-import com.cleanroommc.retrosophisticatedbackpacks.Tags
 import com.cleanroommc.retrosophisticatedbackpacks.backpack.BackpackInventoryHelper
-import com.cleanroommc.retrosophisticatedbackpacks.capability.Capabilities
+import com.cleanroommc.retrosophisticatedbackpacks.capability.BackpackHelper
 import com.cleanroommc.retrosophisticatedbackpacks.item.BackpackItem
 import net.minecraft.entity.item.EntityItem
-import net.minecraft.init.SoundEvents
 import net.minecraft.item.ItemStack
-import net.minecraft.util.EnumActionResult
-import net.minecraft.util.SoundCategory
+import net.minecraftforge.event.entity.player.EntityInteractEvent
 import net.minecraftforge.event.entity.player.EntityItemPickupEvent
-import net.minecraftforge.event.entity.player.PlayerInteractEvent
-import net.minecraftforge.fml.common.Mod
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
-import net.minecraftforge.items.IItemHandler
-import net.minecraftforge.items.wrapper.InvWrapper
 
-@Mod.EventBusSubscriber(modid = Tags.MOD_ID)
+// Register manually via MinecraftForge.EVENT_BUS.register(EntityEventHandler) in mod init.
 object EntityEventHandler {
 
     @SubscribeEvent
     @JvmStatic
     fun onItemPickup(event: EntityItemPickupEvent) {
         val player = event.entityPlayer
-        val inventory = player.inventory
-        var stack = event.item.item.copy()
+        val entityItem = event.item
+        val original = entityItem.entityItem ?: return
+        if (original.stackSize <= 0) return
 
-        stack = attemptPickup(InvWrapper(inventory), stack)
+        var remaining: ItemStack? = original.copy()
+        remaining = attemptPickup(player.inventory.mainInventory, remaining!!)
 
-        if (!stack.isEmpty && RetroSophisticatedBackpacks.baublesLoaded) {
-            stack = attemptPickup(BaublesApi.getBaublesHandler(player), stack)
-        }
-
-        if (stack.isEmpty) {
-            event.item.setDead()
+        if (remaining == null || remaining.stackSize <= 0) {
+            entityItem.setDead()
             event.isCanceled = true
-
-            event.item.world.playSound(
-                null,
-                event.item.posX, event.item.posY, event.item.posZ, SoundEvents.ENTITY_ITEM_PICKUP,
-                SoundCategory.PLAYERS, 0.2f,
-                ((player.rng.nextFloat() - player.rng.nextFloat()) * 0.7f + 1.0f) * 2.0f
+            player.worldObj.playSoundAtEntity(
+                player, "random.pop", 0.2f,
+                ((player.getRNG().nextFloat() - player.getRNG().nextFloat()) * 0.7f + 1.0f) * 2.0f
             )
-            return
-        } else if (stack.count != event.item.item.count) {
-            event.item.setDead()
+        } else if (remaining.stackSize != original.stackSize) {
+            entityItem.setDead()
             event.isCanceled = true
-
-            val world = event.item.world
-            val alteredEntityItem = EntityItem(world, event.item.posX, event.item.posY, event.item.posZ, stack)
-            alteredEntityItem.setNoPickupDelay()
-            world.spawnEntity(alteredEntityItem)
+            val world = entityItem.worldObj
+            val newEntity = EntityItem(world, entityItem.posX, entityItem.posY, entityItem.posZ, remaining)
+            newEntity.delayBeforeCanPickup = 0
+            world.spawnEntityInWorld(newEntity)
         }
     }
 
-    /**
-     * Attempts to perform pickup to any backpack exists in targetInventory.
-     */
-    private fun attemptPickup(targetInventory: IItemHandler, stack: ItemStack): ItemStack {
-        var stack = stack
-
-        for (i in 0 until targetInventory.slots) {
-            val backpackStack = targetInventory.getStackInSlot(i)
-
-            if (backpackStack.item !is BackpackItem)
-                continue
-
-            val wrapper = backpackStack.getCapability(Capabilities.BACKPACK_CAPABILITY, null) ?: continue
-
-            if (!wrapper.canPickupItem(stack))
-                continue
-
+    private fun attemptPickup(inventoryStacks: Array<ItemStack?>, stack: ItemStack): ItemStack? {
+        var remaining: ItemStack? = stack
+        for (inventoryStack in inventoryStacks) {
+            if (inventoryStack == null || inventoryStack.stackSize <= 0) continue
+            if (inventoryStack.item !is BackpackItem) continue
+            val wrapper = BackpackHelper.getWrapper(inventoryStack) ?: continue
+            if (!wrapper.canPickupItem(remaining ?: return null)) continue
             var slotIndex = 0
-            while (!stack.isEmpty && slotIndex < wrapper.slots) {
-                stack = wrapper.backpackItemStackHandler.prioritizedInsertion(slotIndex, stack, false)
-
+            while (remaining != null && slotIndex < wrapper.getSlots()) {
+                remaining = wrapper.backpackItemStackHandler.prioritizedInsertion(slotIndex, remaining, false)
                 slotIndex++
             }
-
-            if (stack.isEmpty)
-                break
+            if (remaining == null) break
         }
-
-        return stack
+        return remaining
     }
 
     @SubscribeEvent
     @JvmStatic
-    fun onPlayerInteract(event: PlayerInteractEvent.EntityInteract) {
+    fun onEntityInteract(event: EntityInteractEvent) {
         val player = event.entityPlayer
-        val stack = player.heldItemMainhand
+        val stack = player.getHeldItem() ?: return
+        if (stack.stackSize <= 0) return
         val entity = event.target
 
-        if (stack.item is BackpackItem) {
-            if (player.isSneaking) {
-                val wrapper = stack.getCapability(Capabilities.BACKPACK_CAPABILITY, null)
-                    ?: return
-                var transferred = BackpackInventoryHelper.attemptDepositOnEntity(wrapper, entity)
-                transferred =
-                    BackpackInventoryHelper.attemptRestockFromEntity(wrapper, entity) || transferred
+        if (stack.item is BackpackItem && player.isSneaking) {
+            val wrapper = BackpackHelper.getWrapper(stack) ?: return
+            var transferred = BackpackInventoryHelper.attemptDepositOnEntity(wrapper, entity)
+            transferred = BackpackInventoryHelper.attemptRestockFromEntity(wrapper, entity) || transferred
 
-                if (transferred) {
-                    player.world.playSound(
-                        null,
-                        player.position,
-                        SoundEvents.ITEM_ARMOR_EQUIP_IRON,
-                        SoundCategory.BLOCKS,
-                        0.5f,
-                        0.5f
-                    )
-
-                    event.isCanceled = true
-                    event.cancellationResult = EnumActionResult.SUCCESS
-                }
+            if (transferred) {
+                player.worldObj.playSoundAtEntity(player, "mob.armor.equip_iron", 0.5f, 0.5f)
+                event.isCanceled = true
             }
         }
     }

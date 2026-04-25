@@ -1,6 +1,6 @@
 package com.cleanroommc.retrosophisticatedbackpacks.item
 
-import com.cleanroommc.retrosophisticatedbackpacks.capability.upgrade.IDepositUpgrade
+import com.cleanroommc.retrosophisticatedbackpacks.capability.upgrade.UpgradeWrapper
 
-class DepositUpgradeItem(registryName: String, wrapperFactory: () -> IDepositUpgrade) :
-    RankedUpgradeItem<IDepositUpgrade>(registryName, wrapperFactory)
+class DepositUpgradeItem(registryName: String, wrapperFactory: () -> UpgradeWrapper<*>) :
+    RankedUpgradeItem(registryName, wrapperFactory)

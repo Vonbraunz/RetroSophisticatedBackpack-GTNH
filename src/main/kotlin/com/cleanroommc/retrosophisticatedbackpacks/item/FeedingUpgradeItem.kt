@@ -1,6 +1,6 @@
 package com.cleanroommc.retrosophisticatedbackpacks.item
 
-import com.cleanroommc.retrosophisticatedbackpacks.capability.upgrade.IFeedingUpgrade
+import com.cleanroommc.retrosophisticatedbackpacks.capability.upgrade.UpgradeWrapper
 
-class FeedingUpgradeItem(registryName: String, wrapperFactory: () -> IFeedingUpgrade) :
-    RankedUpgradeItem<IFeedingUpgrade>(registryName, wrapperFactory)
+class FeedingUpgradeItem(registryName: String, wrapperFactory: () -> UpgradeWrapper<*>) :
+    RankedUpgradeItem(registryName, wrapperFactory)

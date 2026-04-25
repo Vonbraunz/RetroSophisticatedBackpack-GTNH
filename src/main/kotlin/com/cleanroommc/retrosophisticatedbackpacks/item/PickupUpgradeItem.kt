@@ -1,6 +1,6 @@
 package com.cleanroommc.retrosophisticatedbackpacks.item
 
-import com.cleanroommc.retrosophisticatedbackpacks.capability.upgrade.IPickupUpgrade
+import com.cleanroommc.retrosophisticatedbackpacks.capability.upgrade.UpgradeWrapper
 
-class PickupUpgradeItem(val registryName: String, wrapperFactory: () -> IPickupUpgrade) :
-    RankedUpgradeItem<IPickupUpgrade>(registryName, wrapperFactory)
+class PickupUpgradeItem(registryName: String, wrapperFactory: () -> UpgradeWrapper<*>) :
+    RankedUpgradeItem(registryName, wrapperFactory)
