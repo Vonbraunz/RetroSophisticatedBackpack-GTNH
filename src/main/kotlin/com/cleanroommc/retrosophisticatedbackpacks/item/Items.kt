@@ -1,7 +1,5 @@
 package com.cleanroommc.retrosophisticatedbackpacks.item
 
-import com.cleanroommc.retrosophisticatedbackpacks.backpack.BackpackTier
-import com.cleanroommc.retrosophisticatedbackpacks.block.Blocks
 import com.cleanroommc.retrosophisticatedbackpacks.capability.upgrade.*
 import com.cleanroommc.retrosophisticatedbackpacks.config.Config
 import net.minecraft.item.Item
@@ -14,53 +12,23 @@ object Items {
     @JvmField
     val BACKPACK_ITEMS = mutableListOf<BackpackItem>()
 
-    // Backpacks
+    // Set by RegistryHandler.registerBlocks() after GameRegistry creates them
     @JvmField
-    val backpackLeather = BackpackItem(
-        "backpack_leather",
-        Blocks.leatherBackpack,
-        Config.leatherBackpack::slots,
-        Config.leatherBackpack::upgradeSlots,
-        BackpackTier.LEATHER
-    )
+    var backpackLeather: BackpackItem? = null
 
     @JvmField
-    val backpackIron = BackpackItem(
-        "backpack_iron",
-        Blocks.ironBackpack,
-        Config.ironBackpack::slots,
-        Config.ironBackpack::upgradeSlots,
-        BackpackTier.IRON
-    )
+    var backpackIron: BackpackItem? = null
 
     @JvmField
-    val backpackGold = BackpackItem(
-        "backpack_gold",
-        Blocks.goldBackpack,
-        Config.goldBackpack::slots,
-        Config.goldBackpack::upgradeSlots,
-        BackpackTier.GOLD
-    )
+    var backpackGold: BackpackItem? = null
 
     @JvmField
-    val backpackDiamond = BackpackItem(
-        "backpack_diamond",
-        Blocks.diamondBackpack,
-        Config.diamondBackpack::slots,
-        Config.diamondBackpack::upgradeSlots,
-        BackpackTier.DIAMOND
-    )
+    var backpackDiamond: BackpackItem? = null
 
     @JvmField
-    val backpackObsidian = BackpackItem(
-        "backpack_obsidian",
-        Blocks.obsidianBackpack,
-        Config.obsidianBackpack::slots,
-        Config.obsidianBackpack::upgradeSlots,
-        BackpackTier.OBSIDIAN
-    )
+    var backpackObsidian: BackpackItem? = null
 
-    // Upgrades
+    // Upgrade items — created eagerly; add themselves to ITEMS in their init blocks
     @JvmField
     val upgradeBase = UpgradeBaseItem("upgrade_base")
 

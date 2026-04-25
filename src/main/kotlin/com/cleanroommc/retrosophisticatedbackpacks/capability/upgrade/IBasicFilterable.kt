@@ -14,8 +14,8 @@ interface IBasicFilterable : ISidelessCapabilityProvider {
     var filterType: FilterType
 
     fun checkFilter(stack: ItemStack): Boolean = when (filterType) {
-        FilterType.WHITELIST -> filterItems.inventory.any { it != null && it.isItemEqualIgnoreDurability(stack) }
-        FilterType.BLACKLIST -> filterItems.inventory.none { it != null && it.isItemEqualIgnoreDurability(stack) }
+        FilterType.WHITELIST -> filterItems.inventory.any { it != null && it.item == stack.item && ItemStack.areItemStackTagsEqual(it, stack) }
+        FilterType.BLACKLIST -> filterItems.inventory.none { it != null && it.item == stack.item && ItemStack.areItemStackTagsEqual(it, stack) }
     }
 
     enum class FilterType {

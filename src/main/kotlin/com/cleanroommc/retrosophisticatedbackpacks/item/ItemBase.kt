@@ -6,6 +6,6 @@ import net.minecraft.item.Item
 
 open class ItemBase : Item(), IModelRegister {
     override fun registerModels() {
-        RetroSophisticatedBackpacks.proxy.registerItemRenderer(this, 0, "inventory")
+        RetroSophisticatedBackpacks.proxy?.registerItemRenderer(this, 0, "inventory")
     }
 }

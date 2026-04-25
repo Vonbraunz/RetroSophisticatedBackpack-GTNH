@@ -2,12 +2,10 @@ package com.cleanroommc.retrosophisticatedbackpacks.handler
 
 import com.cleanroommc.retrosophisticatedbackpacks.RetroSophisticatedBackpacks
 import com.cleanroommc.retrosophisticatedbackpacks.capability.BackpackWrapper
-import it.unimi.dsi.fastutil.objects.Object2ObjectMap
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import java.util.*
 
 object CapabilityHandler {
-    val BACKPACK_INVENTORY_CACHE: Object2ObjectMap<UUID, BackpackWrapper> = Object2ObjectOpenHashMap()
+    val BACKPACK_INVENTORY_CACHE: HashMap<UUID, BackpackWrapper> = HashMap()
 
     fun cacheBackpackInventory(backpackWrapper: BackpackWrapper) {
         if (BACKPACK_INVENTORY_CACHE.containsKey(backpackWrapper.uuid)) {

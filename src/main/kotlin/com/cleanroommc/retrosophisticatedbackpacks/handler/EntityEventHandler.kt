@@ -7,7 +7,7 @@ import net.minecraft.entity.item.EntityItem
 import net.minecraft.item.ItemStack
 import net.minecraftforge.event.entity.player.EntityInteractEvent
 import net.minecraftforge.event.entity.player.EntityItemPickupEvent
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
+import cpw.mods.fml.common.eventhandler.SubscribeEvent
 
 // Register manually via MinecraftForge.EVENT_BUS.register(EntityEventHandler) in mod init.
 object EntityEventHandler {

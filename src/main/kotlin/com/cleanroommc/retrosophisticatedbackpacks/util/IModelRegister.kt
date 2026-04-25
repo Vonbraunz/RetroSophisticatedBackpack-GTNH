@@ -8,7 +8,7 @@ interface IModelRegister {
 
     interface Block : IModelRegister {
         override fun registerModels() {
-            RetroSophisticatedBackpacks.proxy.registerItemRenderer(
+            RetroSophisticatedBackpacks.proxy?.registerItemRenderer(
                 Item.getItemFromBlock(this as net.minecraft.block.Block),
                 0,
                 "inventory"

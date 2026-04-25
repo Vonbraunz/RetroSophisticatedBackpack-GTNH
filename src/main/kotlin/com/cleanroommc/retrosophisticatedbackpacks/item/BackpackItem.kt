@@ -1,320 +1,139 @@
 package com.cleanroommc.retrosophisticatedbackpacks.item
 
-import baubles.api.BaubleType
-import baubles.api.IBauble
-import baubles.api.render.IRenderBauble
-import com.cleanroommc.modularui.api.IGuiHolder
-import com.cleanroommc.modularui.api.widget.Interactable
-import com.cleanroommc.modularui.screen.ModularPanel
-import com.cleanroommc.modularui.screen.UISettings
-import com.cleanroommc.modularui.value.sync.PanelSyncManager
 import com.cleanroommc.retrosophisticatedbackpacks.RetroSophisticatedBackpacks
 import com.cleanroommc.retrosophisticatedbackpacks.backpack.BackpackInventoryHelper
-import com.cleanroommc.retrosophisticatedbackpacks.backpack.BackpackTier
 import com.cleanroommc.retrosophisticatedbackpacks.block.BackpackBlock
+import com.cleanroommc.retrosophisticatedbackpacks.capability.BackpackHelper
 import com.cleanroommc.retrosophisticatedbackpacks.capability.BackpackWrapper
-import com.cleanroommc.retrosophisticatedbackpacks.capability.Capabilities
-import com.cleanroommc.retrosophisticatedbackpacks.client.BackpackBipedModel
-import com.cleanroommc.retrosophisticatedbackpacks.common.gui.BackpackContainer
-import com.cleanroommc.retrosophisticatedbackpacks.common.gui.BackpackGuiHolder
-import com.cleanroommc.retrosophisticatedbackpacks.common.gui.PlayerInventoryGuiData
-import com.cleanroommc.retrosophisticatedbackpacks.common.gui.PlayerInventoryGuiData.InventoryType
-import com.cleanroommc.retrosophisticatedbackpacks.common.gui.PlayerInventoryGuiFactory
+import com.cleanroommc.retrosophisticatedbackpacks.common.gui.BackpackGuiHandler
 import com.cleanroommc.retrosophisticatedbackpacks.handler.CapabilityHandler
 import com.cleanroommc.retrosophisticatedbackpacks.handler.RegistryHandler
 import com.cleanroommc.retrosophisticatedbackpacks.util.IModelRegister
 import com.cleanroommc.retrosophisticatedbackpacks.util.Utils.asTranslationKey
-import net.minecraft.client.model.ModelBiped
-import net.minecraft.client.renderer.GlStateManager
-import net.minecraft.client.util.ITooltipFlag
 import net.minecraft.entity.Entity
 import net.minecraft.entity.EntityLivingBase
 import net.minecraft.entity.player.EntityPlayer
 import net.minecraft.entity.player.EntityPlayerMP
-import net.minecraft.init.SoundEvents
-import net.minecraft.inventory.EntityEquipmentSlot
+import net.minecraft.inventory.IInventory
 import net.minecraft.item.ItemBlock
-import net.minecraft.item.ItemFood
 import net.minecraft.item.ItemStack
-import net.minecraft.nbt.NBTTagCompound
-import net.minecraft.util.*
-import net.minecraft.util.math.BlockPos
-import net.minecraft.util.text.Style
-import net.minecraft.util.text.TextComponentString
-import net.minecraft.util.text.TextComponentTranslation
-import net.minecraft.util.text.TextFormatting
+import net.minecraft.util.StatCollector
 import net.minecraft.world.World
-import net.minecraftforge.common.capabilities.ICapabilityProvider
-import net.minecraftforge.fml.common.Optional
-import net.minecraftforge.fml.relauncher.Side
-import net.minecraftforge.fml.relauncher.SideOnly
 
-@Optional.Interface(iface = "baubles.api.IBauble", modid = "baubles", striprefs = true)
-@Optional.Interface(iface = "baubles.api.render.IRenderBauble", modid = "baubles", striprefs = true)
-class BackpackItem(
-    registryName: String,
-    backpackBlock: BackpackBlock,
-    val numberOfSlots: () -> Int,
-    val numberOfUpgradeSlots: () -> Int,
-    val tier: BackpackTier,
-) : ItemBlock(backpackBlock), IModelRegister, IGuiHolder<PlayerInventoryGuiData>, IBauble, IRenderBauble {
-    // FIXME: Later when adding tank upgrade and its corresponding model, we should change this implementation to
-    // hashmap, and the key would depends on the count of tanks upgrades
-    private var cachedBipedModel: BackpackBipedModel? = null
+class BackpackItem(block: net.minecraft.block.Block) : ItemBlock(block), IModelRegister {
+    val backpackBlock: BackpackBlock = block as BackpackBlock
+    val tier get() = backpackBlock.tier
+    val numberOfSlots get() = com.cleanroommc.retrosophisticatedbackpacks.config.Config.getSlotsForTier(tier)
+    val numberOfUpgradeSlots get() = com.cleanroommc.retrosophisticatedbackpacks.config.Config.getUpgradeSlotsForTier(tier)
 
     init {
         setMaxStackSize(1)
         setCreativeTab(RetroSophisticatedBackpacks.CREATIVE_TAB)
-        setRegistryName(registryName)
-        setTranslationKey(registryName.asTranslationKey())
-
+        setUnlocalizedName(backpackBlock.registryName.asTranslationKey())
         Items.ITEMS.add(this)
         Items.BACKPACK_ITEMS.add(this)
         RegistryHandler.MODELS.add(this)
     }
 
+    // Shift-click on a block → deposit/restock with that block's inventory
     override fun onItemUseFirst(
-        player: EntityPlayer,
-        world: World,
-        pos: BlockPos,
-        side: EnumFacing,
-        hitX: Float,
-        hitY: Float,
-        hitZ: Float,
-        hand: EnumHand
-    ): EnumActionResult {
-        if (player.isSneaking) {
-            val stack = player.getHeldItem(hand)
-            val wrapper = stack.getCapability(Capabilities.BACKPACK_CAPABILITY, null)
-                ?: return super.onItemUse(player, world, pos, hand, side, hitX, hitY, hitZ)
-            val tileEntity = world.getTileEntity(pos)
-                ?: return super.onItemUse(player, world, pos, hand, side, hitX, hitY, hitZ)
-            var transferred = BackpackInventoryHelper.attemptDepositOnTileEntity(wrapper, tileEntity, side)
-            transferred =
-                BackpackInventoryHelper.attemptRestockFromTileEntity(wrapper, tileEntity, side) || transferred
-
-            if (transferred) {
-                world.playSound(
-                    null,
-                    player.position,
-                    SoundEvents.ITEM_ARMOR_EQUIP_IRON,
-                    SoundCategory.BLOCKS,
-                    0.5f,
-                    0.5f
-                )
-
-                return EnumActionResult.SUCCESS
-            }
-        }
-
-        return super.onItemUseFirst(player, world, pos, side, hitX, hitY, hitZ, hand)
-    }
-
-    override fun onItemUse(
-        player: EntityPlayer,
-        worldIn: World,
-        pos: BlockPos,
-        hand: EnumHand,
-        facing: EnumFacing,
-        hitX: Float,
-        hitY: Float,
-        hitZ: Float
-    ): EnumActionResult {
-        val te = worldIn.getTileEntity(pos)
-
-        if (player.isSneaking && te != null)
-            return super.onItemUse(player, worldIn, pos, hand, facing, hitX, hitY, hitZ)
-
-        if (!worldIn.isRemote)
-            PlayerInventoryGuiFactory.open(player, hand)
-
-        return EnumActionResult.SUCCESS
-    }
-
-    override fun onItemRightClick(worldIn: World, player: EntityPlayer, handIn: EnumHand): ActionResult<ItemStack?> {
-        if (!worldIn.isRemote) {
-            PlayerInventoryGuiFactory.open(player, handIn)
-        }
-
-        return ActionResult(EnumActionResult.SUCCESS, player.getHeldItem(handIn))
-    }
-
-    override fun itemInteractionForEntity(
-        stack: ItemStack,
-        playerIn: EntityPlayer,
-        target: EntityLivingBase,
-        hand: EnumHand
+        stack: ItemStack, player: EntityPlayer, world: World,
+        x: Int, y: Int, z: Int, side: Int,
+        hitX: Float, hitY: Float, hitZ: Float
     ): Boolean {
-        if (playerIn.isSneaking) {
-            val wrapper = stack.getCapability(Capabilities.BACKPACK_CAPABILITY, null)
-                ?: return super.itemInteractionForEntity(stack, playerIn, target, hand)
-            var transferred = BackpackInventoryHelper.attemptDepositOnEntity(wrapper, target)
-            transferred =
-                BackpackInventoryHelper.attemptRestockFromEntity(wrapper, target) || transferred
-
-            return if (transferred) {
-                playerIn.world.playSound(
-                    null,
-                    playerIn.position,
-                    SoundEvents.ITEM_ARMOR_EQUIP_IRON,
-                    SoundCategory.BLOCKS,
-                    0.5f,
-                    0.5f
-                )
-
-                true
-            } else false
-        }
-
-        return super.itemInteractionForEntity(stack, playerIn, target, hand)
-    }
-
-    override fun initCapabilities(stack: ItemStack, nbt: NBTTagCompound?): ICapabilityProvider {
-        val wrapper = BackpackWrapper(numberOfSlots, numberOfUpgradeSlots)
-        nbt?.let(wrapper::deserializeNBT)
-        return wrapper
-    }
-
-    override fun onUpdate(stack: ItemStack, worldIn: World, entityIn: Entity, itemSlot: Int, isSelected: Boolean) {
-        // Only cache on server
-        if (!worldIn.isRemote && entityIn is EntityPlayerMP) {
-            val wrapper = stack.getCapability(Capabilities.BACKPACK_CAPABILITY, null) ?: return
-
-            if (entityIn.ticksExisted % 20 == 0)
-                wrapper.feed(entityIn, wrapper)
-
-            if (!wrapper.isCached)
-                CapabilityHandler.cacheBackpackInventory(wrapper)
-        }
-    }
-
-    override fun isValidArmor(stack: ItemStack, armorType: EntityEquipmentSlot, entity: Entity): Boolean =
-        armorType == EntityEquipmentSlot.CHEST
-
-    override fun getEquipmentSlot(stack: ItemStack): EntityEquipmentSlot = EntityEquipmentSlot.CHEST
-
-    @SideOnly(Side.CLIENT)
-    override fun getArmorModel(
-        entityLiving: EntityLivingBase,
-        itemStack: ItemStack,
-        armorSlot: EntityEquipmentSlot,
-        _default: ModelBiped
-    ): ModelBiped? {
-        if (armorSlot == EntityEquipmentSlot.CHEST) {
-            val model = if (cachedBipedModel != null) cachedBipedModel
-            else {
-                cachedBipedModel = BackpackBipedModel(itemStack)
-                cachedBipedModel
+        if (player.isSneaking) {
+            val te = world.getTileEntity(x, y, z) as? IInventory ?: return false
+            val wrapper = getOrCreateWrapper(stack) ?: return false
+            var transferred = BackpackInventoryHelper.attemptDepositOnInventory(wrapper, te)
+            transferred = BackpackInventoryHelper.attemptRestockFromInventory(wrapper, te) || transferred
+            if (transferred) {
+                BackpackHelper.saveWrapper(stack, wrapper)
+                world.playSoundAtEntity(player, "mob.armor.equip_iron", 0.5f, 0.5f)
+                return true
             }
-
-            model?.setModelAttributes(_default)
-            return model
         }
-
-        return null
+        return false
     }
 
-    override fun getNBTShareTag(stack: ItemStack): NBTTagCompound? {
-        var nbt = super.getNBTShareTag(stack)
-        val wrapper = stack.getCapability(Capabilities.BACKPACK_CAPABILITY, null) ?: return nbt
-
-        if (nbt != null) nbt.setTag("BackpackCapability", wrapper.serializeNBT())
-        else {
-            nbt = NBTTagCompound()
-            nbt.setTag("BackpackCapability", wrapper.serializeNBT())
+    // Normal right-click on block: if sneaking, place block; otherwise open GUI
+    override fun onItemUse(
+        stack: ItemStack, player: EntityPlayer, world: World,
+        x: Int, y: Int, z: Int, side: Int,
+        hitX: Float, hitY: Float, hitZ: Float
+    ): Boolean {
+        val te = world.getTileEntity(x, y, z)
+        if (player.isSneaking && te != null) {
+            return super.onItemUse(stack, player, world, x, y, z, side, hitX, hitY, hitZ)
         }
-
-        return nbt
+        if (!world.isRemote) {
+            ensureWrapper(stack)
+            player.openGui(RetroSophisticatedBackpacks.instance, BackpackGuiHandler.BACKPACK_ITEM_GUI_ID, world, 0, 0, 0)
+        }
+        return true
     }
 
-    override fun readNBTShareTag(stack: ItemStack, nbt: NBTTagCompound?) {
-        super.readNBTShareTag(stack, nbt)
-        if (nbt == null)
-            return
-        val wrapper = stack.getCapability(Capabilities.BACKPACK_CAPABILITY, null) ?: return
+    // Right-click on air → open GUI
+    override fun onItemRightClick(stack: ItemStack, world: World, player: EntityPlayer): ItemStack {
+        if (!world.isRemote) {
+            ensureWrapper(stack)
+            player.openGui(RetroSophisticatedBackpacks.instance, BackpackGuiHandler.BACKPACK_ITEM_GUI_ID, world, 0, 0, 0)
+        }
+        return stack
+    }
 
-        if (nbt.hasKey("BackpackCapability")) {
-            wrapper.deserializeNBT(nbt.getCompoundTag("BackpackCapability"))
+    // Shift-click on entity → deposit/restock with entity inventory
+    override fun itemInteractionForEntity(stack: ItemStack, player: EntityPlayer, entity: EntityLivingBase): Boolean {
+        if (player.isSneaking) {
+            val wrapper = getOrCreateWrapper(stack) ?: return false
+            var transferred = BackpackInventoryHelper.attemptDepositOnEntity(wrapper, entity)
+            transferred = BackpackInventoryHelper.attemptRestockFromEntity(wrapper, entity) || transferred
+            if (transferred) {
+                BackpackHelper.saveWrapper(stack, wrapper)
+                player.worldObj.playSoundAtEntity(player, "mob.armor.equip_iron", 0.5f, 0.5f)
+                return true
+            }
+        }
+        return false
+    }
+
+    // Feed upgrade tick, UUID cache
+    override fun onUpdate(stack: ItemStack, world: World, entity: Entity, slot: Int, selected: Boolean) {
+        if (!world.isRemote && entity is EntityPlayerMP) {
+            val wrapper = BackpackHelper.getWrapper(stack) ?: return
+            if (entity.ticksExisted % 20 == 0) wrapper.feed(entity, wrapper.backpackItemStackHandler)
+            if (!wrapper.isCached) CapabilityHandler.cacheBackpackInventory(wrapper)
         }
     }
 
-    override fun addInformation(
-        stack: ItemStack,
-        worldIn: World?,
-        tooltip: MutableList<String>,
-        flagIn: ITooltipFlag
-    ) {
-        tooltip.add(
-            TextComponentTranslation(
-                "tooltip.backpack.inventory_size".asTranslationKey(),
-                numberOfSlots()
-            ).formattedText
-        )
-        tooltip.add(
-            TextComponentTranslation(
-                "tooltip.backpack.upgrade_slots_size".asTranslationKey(),
-                numberOfUpgradeSlots()
-            ).formattedText
-        )
-
-        if (Interactable.hasShiftDown()) {
-            val wrapper = stack.getCapability(Capabilities.BACKPACK_CAPABILITY, null) ?: return
-            val stackHint =
-                if (wrapper.isStackedByMultiplication()) "(xM)"
-                else "(+M)"
-
-            tooltip.add(
-                TextComponentTranslation(
-                    "tooltip.backpack.stack_multiplier".asTranslationKey(),
-                    wrapper.getTotalStackMultiplier(),
-                    TextComponentString(stackHint).setStyle(Style().setColor(TextFormatting.RED)).formattedText
-                ).formattedText
+    @Suppress("UNCHECKED_CAST", "OVERRIDE_DEPRECATION")
+    override fun addInformation(stack: ItemStack, player: EntityPlayer?, tooltip: MutableList<*>, advanced: Boolean) {
+        (tooltip as MutableList<String>).add(
+            StatCollector.translateToLocalFormatted(
+                "tooltip.backpack.inventory_size".asTranslationKey(), numberOfSlots
             )
-        } else {
-            tooltip.add(TextComponentTranslation("tooltip.shift_to_reveal".asTranslationKey()).formattedText)
-        }
-    }
-
-    override fun buildUI(
-        data: PlayerInventoryGuiData,
-        syncManager: PanelSyncManager,
-        uiSettings: UISettings
-    ): ModularPanel {
-        val stack = data.usedItemStack
-        val wrapper = stack.getCapability(Capabilities.BACKPACK_CAPABILITY, null)!!
-        val slotIndex = if (data.inventoryType == InventoryType.PLAYER_INVENTORY) data.slotIndex else null
-        uiSettings.customContainer { BackpackContainer(wrapper, slotIndex) }
-        val holder = BackpackGuiHolder.ItemStackGuiHolder(wrapper)
-        return holder.buildUI(data, syncManager, uiSettings)
+        )
+        (tooltip as MutableList<String>).add(
+            StatCollector.translateToLocalFormatted(
+                "tooltip.backpack.upgrade_slots_size".asTranslationKey(), numberOfUpgradeSlots
+            )
+        )
     }
 
     override fun registerModels() {
-        RetroSophisticatedBackpacks.proxy.registerItemRenderer(this, 0, "inventory")
+        // TODO: register item renderer via IItemRenderer / TESR when rendering layer is ported
     }
 
-    @Optional.Method(modid = "baubles")
-    override fun onWornTick(stack: ItemStack, player: EntityLivingBase) {
-        this.onUpdate(stack, player.world, player, -1, false)
+    private fun getOrCreateWrapper(stack: ItemStack): BackpackWrapper? {
+        val existing = BackpackHelper.getWrapper(stack)
+        if (existing != null) return existing
+        val wrapper = BackpackWrapper({ numberOfSlots }, { numberOfUpgradeSlots })
+        BackpackHelper.saveWrapper(stack, wrapper)
+        return wrapper
     }
 
-    @Optional.Method(modid = "baubles")
-    override fun getBaubleType(stack: ItemStack): BaubleType =
-        BaubleType.BODY
-
-    @Optional.Method(modid = "baubles")
-    @SideOnly(Side.CLIENT)
-    override fun onPlayerBaubleRender(
-        itemStack: ItemStack,
-        entityPlayer: EntityPlayer,
-        renderType: IRenderBauble.RenderType,
-        partialTicks: Float
-    ) {
-        if (renderType != IRenderBauble.RenderType.BODY)
-            return
-
-        GlStateManager.pushMatrix()
-        BackpackBipedModel.renderBackpack(itemStack, entityPlayer)
-
-        GlStateManager.popMatrix()
+    private fun ensureWrapper(stack: ItemStack) {
+        if (BackpackHelper.getWrapper(stack) == null) {
+            BackpackHelper.saveWrapper(stack, BackpackWrapper({ numberOfSlots }, { numberOfUpgradeSlots }))
+        }
     }
 }

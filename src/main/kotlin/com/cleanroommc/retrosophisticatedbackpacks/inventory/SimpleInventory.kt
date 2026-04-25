@@ -3,7 +3,7 @@ package com.cleanroommc.retrosophisticatedbackpacks.inventory
 import net.minecraft.item.ItemStack
 import net.minecraft.nbt.NBTTagCompound
 import net.minecraft.nbt.NBTTagList
-import net.minecraftforge.common.util.INBTSerializable
+import com.cleanroommc.retrosophisticatedbackpacks.util.INBTSerializable
 
 open class SimpleInventory(val size: Int) : INBTSerializable<NBTTagCompound> {
 
@@ -28,7 +28,7 @@ open class SimpleInventory(val size: Int) : INBTSerializable<NBTTagCompound> {
 
     open fun getStackLimit(slot: Int, stack: ItemStack): Int = stack.maxStackSize
 
-    fun insertItem(slot: Int, stack: ItemStack?, simulate: Boolean): ItemStack? {
+    open fun insertItem(slot: Int, stack: ItemStack?, simulate: Boolean): ItemStack? {
         if (stack == null || stack.stackSize <= 0) return null
         validateSlotIndex(slot)
         if (!isItemValid(slot, stack)) return stack
@@ -57,7 +57,7 @@ open class SimpleInventory(val size: Int) : INBTSerializable<NBTTagCompound> {
         return if (reachedLimit) copyWithSize(stack, stack.stackSize - limit) else null
     }
 
-    fun extractItem(slot: Int, amount: Int, simulate: Boolean): ItemStack? {
+    open fun extractItem(slot: Int, amount: Int, simulate: Boolean): ItemStack? {
         if (amount <= 0) return null
         validateSlotIndex(slot)
 

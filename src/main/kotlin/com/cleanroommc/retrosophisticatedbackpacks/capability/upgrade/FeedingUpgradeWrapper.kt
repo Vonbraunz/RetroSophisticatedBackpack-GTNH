@@ -23,7 +23,7 @@ class FeedingUpgradeWrapper : BasicUpgradeWrapper<FeedingUpgradeItem>(), IFeedin
             val stack = handler.getStackInSlot(slot) ?: continue
             if (!checkFilter(stack)) continue
             val item = stack.item as? ItemFood ?: continue
-            if (item.getHealAmount(stack) <= 20 - foodLevel) return slot
+            if (item.func_150905_g(stack) <= 20 - foodLevel) return slot
         }
         return -1
     }

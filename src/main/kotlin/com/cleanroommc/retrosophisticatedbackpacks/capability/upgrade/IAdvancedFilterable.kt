@@ -37,12 +37,12 @@ interface IAdvancedFilterable : IBasicFilterable {
     }
 
     private fun matchMod(stack: ItemStack): Boolean {
-        val stackModId = net.minecraftforge.fml.common.registry.GameRegistry
+        val stackModId = cpw.mods.fml.common.registry.GameRegistry
             .findUniqueIdentifierFor(stack.item)?.modId ?: return false
         val filterResult = BooleanArray(16)
         for ((i, filterStack) in filterItems.inventory.withIndex()) {
             if (filterStack == null || filterStack.stackSize <= 0) continue
-            val filterModId = net.minecraftforge.fml.common.registry.GameRegistry
+            val filterModId = cpw.mods.fml.common.registry.GameRegistry
                 .findUniqueIdentifierFor(filterStack.item)?.modId ?: continue
             filterResult[i] = stackModId == filterModId
         }
@@ -65,7 +65,7 @@ interface IAdvancedFilterable : IBasicFilterable {
 
     private fun matchItemInfo(stack: ItemStack, filterStack: ItemStack): Boolean {
         if (filterStack.stackSize <= 0) return false
-        var flag = if (ignoreDurability) filterStack.isItemEqualIgnoreDurability(stack)
+        var flag = if (ignoreDurability) filterStack.item == stack.item && ItemStack.areItemStackTagsEqual(filterStack, stack)
                    else filterStack.isItemEqual(stack)
         if (!ignoreNBT) flag = flag && filterStack.tagCompound == stack.tagCompound
         return flag

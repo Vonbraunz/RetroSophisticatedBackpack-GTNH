@@ -4,7 +4,7 @@ import com.cleanroommc.retrosophisticatedbackpacks.capability.ISidelessCapabilit
 import com.cleanroommc.retrosophisticatedbackpacks.inventory.SimpleInventory
 import net.minecraft.entity.player.EntityPlayer
 import net.minecraft.nbt.NBTTagCompound
-import net.minecraftforge.common.util.INBTSerializable
+import com.cleanroommc.retrosophisticatedbackpacks.util.INBTSerializable
 
 sealed interface IFeedingUpgrade : ISidelessCapabilityProvider, INBTSerializable<NBTTagCompound> {
 
@@ -18,7 +18,7 @@ sealed interface IFeedingUpgrade : ISidelessCapabilityProvider, INBTSerializable
         val slot = getFoodSlot(handler, entity.foodStats.foodLevel, entity.health, entity.maxHealth)
         if (slot > -1) {
             val food = handler.extractItem(slot, Int.MAX_VALUE, false) ?: return false
-            val remaining = food.onItemUseFinish(entity.worldObj, entity)
+            val remaining = food.item.onEaten(food, entity.worldObj, entity)
             handler.insertItem(slot, remaining, false)
         }
 

@@ -3,7 +3,7 @@ package com.cleanroommc.retrosophisticatedbackpacks.capability.upgrade
 import com.cleanroommc.retrosophisticatedbackpacks.capability.ISidelessCapabilityProvider
 import net.minecraft.item.ItemStack
 import net.minecraft.nbt.NBTTagCompound
-import net.minecraftforge.common.util.INBTSerializable
+import com.cleanroommc.retrosophisticatedbackpacks.util.INBTSerializable
 
 sealed interface IFilterUpgrade : ISidelessCapabilityProvider, IToggleable, INBTSerializable<NBTTagCompound> {
     companion object {

@@ -43,6 +43,6 @@ abstract class AdvancedUpgradeWrapper<T> : UpgradeWrapper<T>(), IToggleable, IAd
         ignoreNBT = nbt.getBoolean(IAdvancedFilterable.IGNORE_NBT_TAG)
         val oreDictList = nbt.getTagList(IAdvancedFilterable.ORE_DICT_LIST_TAG, Constants.NBT.TAG_STRING)
         for (i in 0 until oreDictList.tagCount())
-            oreDictEntries.add((oreDictList.get(i) as NBTTagString).func_150285_a_())
+            oreDictEntries.add(oreDictList.getStringTagAt(i))
     }
 }

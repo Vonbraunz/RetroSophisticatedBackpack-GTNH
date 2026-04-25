@@ -14,7 +14,7 @@ import com.cleanroommc.retrosophisticatedbackpacks.util.Utils.asTranslationKey
 import net.minecraft.entity.player.EntityPlayer
 import net.minecraft.item.ItemStack
 import net.minecraft.nbt.NBTTagCompound
-import net.minecraftforge.common.util.INBTSerializable
+import com.cleanroommc.retrosophisticatedbackpacks.util.INBTSerializable
 import java.util.*
 
 class BackpackWrapper(
@@ -222,14 +222,14 @@ class BackpackWrapper(
             LOCKED_SLOTS_TAG,
             backpackItemStackHandler.sortLockedSlots.map { if (it) 1 else 0 }.map(Int::toByte).toByteArray()
         )
-        nbt.setUniqueId(UUID_TAG, uuid)
+        nbt.setString(UUID_TAG, uuid.toString())
         return nbt
     }
 
     override fun deserializeNBT(nbt: NBTTagCompound) {
         if (nbt.hasKey(BACKPACK_INVENTORY_SIZE_TAG)) backpackInventorySize = { nbt.getInteger(BACKPACK_INVENTORY_SIZE_TAG) }
         if (nbt.hasKey(UPGRADE_SLOTS_SIZE_TAG)) upgradeSlotsSize = { nbt.getInteger(UPGRADE_SLOTS_SIZE_TAG) }
-        uuid = nbt.getUniqueId(UUID_TAG) ?: UUID.randomUUID()
+        uuid = if (nbt.hasKey(UUID_TAG)) UUID.fromString(nbt.getString(UUID_TAG)) else UUID.randomUUID()
         backpackItemStackHandler = BackpackItemStackHandler(backpackInventorySize(), this)
         upgradeItemStackHandler = UpgradeItemStackHandler(upgradeSlotsSize())
         mainColor = nbt.getInteger(MAIN_COLOR_TAG)

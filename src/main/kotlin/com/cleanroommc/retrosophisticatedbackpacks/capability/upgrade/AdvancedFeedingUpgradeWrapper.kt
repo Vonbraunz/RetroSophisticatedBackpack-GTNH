@@ -31,7 +31,7 @@ class AdvancedFeedingUpgradeWrapper : AdvancedUpgradeWrapper<FeedingUpgradeItem>
             val stack = handler.getStackInSlot(slot) ?: continue
             if (!checkFilter(stack)) continue
             val item = stack.item as? ItemFood ?: continue
-            val healingAmount = item.getHealAmount(stack)
+            val healingAmount = item.func_150905_g(stack)
 
             if (maxHealth > health && healthFeedingStrategy == FeedingStrategy.HEALTH.ALWAYS) return slot
 

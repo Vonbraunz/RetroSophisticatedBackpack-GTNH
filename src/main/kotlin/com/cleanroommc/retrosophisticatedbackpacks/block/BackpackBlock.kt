@@ -10,50 +10,34 @@ import com.cleanroommc.retrosophisticatedbackpacks.util.Utils.asTranslationKey
 import net.minecraft.block.Block
 import net.minecraft.block.ITileEntityProvider
 import net.minecraft.block.material.Material
-import net.minecraft.block.properties.PropertyBool
-import net.minecraft.block.properties.PropertyDirection
-import net.minecraft.block.state.BlockState
-import net.minecraft.block.state.IBlockState
 import net.minecraft.entity.EntityLivingBase
 import net.minecraft.entity.item.EntityItem
 import net.minecraft.entity.player.EntityPlayer
 import net.minecraft.item.Item
 import net.minecraft.item.ItemStack
 import net.minecraft.tileentity.TileEntity
-import net.minecraft.util.EnumFacing
 import net.minecraft.world.IBlockAccess
 import net.minecraft.world.World
 import java.util.ArrayList
 
+// Metadata layout (4 bits):
+//   bits [1:0] = horizontal facing index (0=S,1=W,2=N,3=E)
+//   bits [3:2] = unused (reserved for future tank/battery flags)
 class BackpackBlock(
     val registryName: String,
     explosionResistance: Float,
     val tier: BackpackTier,
 ) : Block(Material.carpet), ITileEntityProvider, IModelRegister.Block {
 
-    companion object {
-        val LEFT_TANK: PropertyBool = PropertyBool.create("left_tank")
-        val RIGHT_TANK: PropertyBool = PropertyBool.create("right_tank")
-        val BATTERY: PropertyBool = PropertyBool.create("battery")
-        val FACING: PropertyDirection = PropertyDirection.create("facing", EnumFacing.Plane.HORIZONTAL)
-
-        private val BOOL_PROPERTIES = arrayOf(LEFT_TANK, RIGHT_TANK, BATTERY)
-    }
-
     constructor(registryName: String, tier: BackpackTier) : this(registryName, 0.8f, tier)
 
     init {
-        setUnlocalizedName(registryName.asTranslationKey())
+        setBlockName(registryName.asTranslationKey())
         setCreativeTab(RetroSophisticatedBackpacks.CREATIVE_TAB)
         setResistance(explosionResistance)
         setHardness(0.8f)
         setStepSound(Block.soundTypeCloth)
         setLightOpacity(0)
-        defaultState = blockState.baseState
-            .withProperty(LEFT_TANK, false)
-            .withProperty(RIGHT_TANK, false)
-            .withProperty(BATTERY, false)
-            .withProperty(FACING, EnumFacing.NORTH)
 
         Blocks.BLOCKS.add(this)
         Blocks.BACKPACK_BLOCKS.add(this)
@@ -63,38 +47,14 @@ class BackpackBlock(
     override fun isOpaqueCube(): Boolean = false
 
     override fun setBlockBoundsBasedOnState(worldIn: IBlockAccess, x: Int, y: Int, z: Int) {
-        val state = getStateFromMeta(worldIn.getBlockMetadata(x, y, z))
-        when (state.getValue(FACING)) {
-            EnumFacing.NORTH, EnumFacing.SOUTH ->
-                setBlockBounds(1 / 16f, 0f, 4 / 16f, 15 / 16f, 14 / 16f, 12 / 16f)
-            else ->
-                setBlockBounds(4 / 16f, 0f, 1 / 16f, 12 / 16f, 14 / 16f, 15 / 16f)
+        val meta = worldIn.getBlockMetadata(x, y, z)
+        val facingIdx = meta and 0b0011
+        // facingIdx 0=S,1=W,2=N,3=E → S and N are along Z axis
+        if (facingIdx == 0 || facingIdx == 2) {
+            setBlockBounds(1 / 16f, 0f, 4 / 16f, 15 / 16f, 14 / 16f, 12 / 16f)
+        } else {
+            setBlockBounds(4 / 16f, 0f, 1 / 16f, 12 / 16f, 14 / 16f, 15 / 16f)
         }
-    }
-
-    override fun createBlockState(): BlockState =
-        BlockState(this, LEFT_TANK, RIGHT_TANK, BATTERY, FACING)
-
-    override fun getStateFromMeta(meta: Int): IBlockState {
-        val leftTank = (meta and 0b10000) shr 4 == 1
-        val rightTank = (meta and 0b01000) shr 3 == 1
-        val battery = (meta and 0b00100) shr 2 == 1
-        val facing = EnumFacing.byHorizontalIndex(meta and 0b00011)
-        return defaultState
-            .withProperty(LEFT_TANK, leftTank)
-            .withProperty(RIGHT_TANK, rightTank)
-            .withProperty(BATTERY, battery)
-            .withProperty(FACING, facing)
-    }
-
-    override fun getMetaFromState(state: IBlockState): Int {
-        var meta = 0
-        for (boolProp in BOOL_PROPERTIES) {
-            if (state.getValue(boolProp)) meta = meta or 1
-            meta = meta shl 1
-        }
-        meta = meta or state.getValue(FACING).horizontalIndex
-        return meta
     }
 
     override fun getMobilityFlag(): Int = 2  // DESTROY on piston push
@@ -120,10 +80,11 @@ class BackpackBlock(
     }
 
     override fun onBlockPlacedBy(world: World, x: Int, y: Int, z: Int, placer: EntityLivingBase, stack: ItemStack) {
-        // Update facing metadata based on placer direction
-        val facingBits = placer.horizontalFacing.opposite.horizontalIndex
+        // Facing: opposite of placer's horizontal look
+        val yaw = (placer.rotationYaw * 4f / 360f + 0.5f).toInt() and 3
+        // yaw: 0=S,1=W,2=N,3=E (matches vanilla chest convention)
         val currentMeta = world.getBlockMetadata(x, y, z)
-        world.setBlockMetadataWithNotify(x, y, z, (currentMeta and 0b11100) or facingBits, 2)
+        world.setBlockMetadataWithNotify(x, y, z, (currentMeta and 0b1100) or (yaw and 0b0011), 2)
 
         // Copy backpack inventory from item stack into tile entity
         val wrapper = BackpackHelper.getWrapper(stack) ?: return

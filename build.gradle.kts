@@ -19,7 +19,7 @@ plugins {
     id("maven-publish")
     id("org.jetbrains.gradle.plugin.idea-ext") version "1.1.7"
     id("eclipse")
-    id("com.gtnewhorizons.retrofuturagradle") version "1.3.27"
+    id("com.gtnewhorizons.retrofuturagradle") version "1.4.9"
 }
 
 @Suppress("PropertyName")
@@ -117,12 +117,12 @@ dependencies {
     // TODO: confirm the 1.7.10 Forgelin artifact and KotlinAdapter class name
     // Candidate: com.cleanroommc:forgelin-continuous:<version> (check CleanroomMC maven for 1.7.10 jar)
     // The @Mod modLanguageAdapter in RetroSophisticatedBackpacks.kt must match
-    implementation("com.cleanroommc:forgelin-continuous:1.0.0") {
+    implementation("com.cleanroommc:forgelin-continuous:2.0.3") {
         exclude("net.minecraftforge")
     }
 
-    // TODO: confirm the 1.7.10 ModularUI version (CleanroomMC maven, likely 2.x)
-    implementation("com.cleanroommc:modularui:2.4.0")
+    // TODO: add ModularUI for 1.7.10 when GUI layer is implemented
+    // implementation("com.cleanroommc:modularui:2.4.0")
 
     // TODO: confirm MixinBooter version available for 1.7.10
     if (use_mixins.toBoolean()) {
@@ -134,8 +134,7 @@ dependencies {
         annotationProcessor(mixin) { isTransitive = false }
     }
 
-    // TODO: confirm Baubles 1.7.10 curse file ID
-    implementation(rfg.deobf("curse.maven:baubles-227083:2518667"))
+    // Baubles removed — no bauble slot in this port
 }
 
 if (use_access_transformer.toBoolean()) {
@@ -170,7 +169,7 @@ tasks.withType<Jar> {
             }
         }
         if (use_access_transformer.toBoolean()) {
-            attributeMap["FMLAT"] = "$archives_base_name_at.cfg"
+            attributeMap["FMLAT"] = "${archives_base_name}_at.cfg"
         }
         attributes(attributeMap)
     }

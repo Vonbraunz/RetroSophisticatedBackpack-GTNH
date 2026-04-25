@@ -1,9 +1,9 @@
 package com.cleanroommc.retrosophisticatedbackpacks.handler
 
 import com.cleanroommc.retrosophisticatedbackpacks.network.C2SOpenBackpackPacket
-import net.minecraftforge.fml.common.network.NetworkRegistry
-import net.minecraftforge.fml.common.network.simpleimpl.SimpleNetworkWrapper
-import net.minecraftforge.fml.relauncher.Side
+import cpw.mods.fml.common.network.NetworkRegistry
+import cpw.mods.fml.common.network.simpleimpl.SimpleNetworkWrapper
+import cpw.mods.fml.relauncher.Side
 
 object NetworkHandler {
     val INSTANCE: SimpleNetworkWrapper = NetworkRegistry.INSTANCE.newSimpleChannel("rsb")

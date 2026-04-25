@@ -4,7 +4,7 @@ import com.cleanroommc.retrosophisticatedbackpacks.capability.BackpackWrapper
 import com.cleanroommc.retrosophisticatedbackpacks.config.Config
 import com.cleanroommc.retrosophisticatedbackpacks.item.BackpackItem
 import net.minecraft.item.ItemStack
-import net.minecraftforge.fml.common.registry.GameRegistry
+import cpw.mods.fml.common.registry.GameRegistry
 import kotlin.math.min
 
 class BackpackItemStackHandler(size: Int, private val wrapper: BackpackWrapper) : ExposedItemStackHandler(size) {
@@ -22,7 +22,7 @@ class BackpackItemStackHandler(size: Int, private val wrapper: BackpackWrapper) 
         } else if (memorizedSlotRespectNbtList[slot]) {
             ItemStack.areItemStacksEqual(stack, memorized)
         } else {
-            stack.isItemEqualIgnoreDurability(memorized)
+            stack.item == memorized.item && ItemStack.areItemStackTagsEqual(stack, memorized)
         }
     }
 

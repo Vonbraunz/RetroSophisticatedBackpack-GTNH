@@ -1,12 +1,11 @@
 package com.cleanroommc.retrosophisticatedbackpacks.preloader
 
 import com.cleanroommc.retrosophisticatedbackpacks.Tags
-import net.minecraftforge.common.ForgeVersion
-import net.minecraftforge.fml.relauncher.IFMLLoadingPlugin
+import cpw.mods.fml.relauncher.IFMLLoadingPlugin
 import zone.rong.mixinbooter.IEarlyMixinLoader
 
 @IFMLLoadingPlugin.Name("Retro Sophisticated Backpacks")
-@IFMLLoadingPlugin.MCVersion(ForgeVersion.mcVersion)
+@IFMLLoadingPlugin.MCVersion("1.7.10")
 class RSBPlugin : IFMLLoadingPlugin, IEarlyMixinLoader {
     override fun getASMTransformerClass(): Array<out String> =
         arrayOf()

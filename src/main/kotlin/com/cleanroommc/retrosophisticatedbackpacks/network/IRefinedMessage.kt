@@ -1,7 +1,7 @@
 package com.cleanroommc.retrosophisticatedbackpacks.network
 
+import cpw.mods.fml.common.network.simpleimpl.IMessage
 import io.netty.buffer.ByteBuf
-import net.minecraftforge.fml.common.network.simpleimpl.IMessage
 
 interface IRefinedMessage : IMessage {
     override fun toBytes(buf: ByteBuf)

@@ -9,7 +9,7 @@ import net.minecraft.entity.player.InventoryPlayer
 import net.minecraft.inventory.IInventory
 import net.minecraft.item.ItemStack
 import net.minecraft.tileentity.TileEntity
-import net.minecraftforge.fml.common.registry.GameRegistry
+import cpw.mods.fml.common.registry.GameRegistry
 import net.minecraftforge.oredict.OreDictionary
 import kotlin.math.min
 

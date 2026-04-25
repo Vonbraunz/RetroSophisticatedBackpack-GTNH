@@ -1,74 +1,72 @@
 package com.cleanroommc.retrosophisticatedbackpacks
 
+import com.cleanroommc.retrosophisticatedbackpacks.common.gui.BackpackGuiHandler
 import com.cleanroommc.retrosophisticatedbackpacks.handler.CapabilityHandler
+import com.cleanroommc.retrosophisticatedbackpacks.handler.EntityEventHandler
 import com.cleanroommc.retrosophisticatedbackpacks.handler.NetworkHandler
+import com.cleanroommc.retrosophisticatedbackpacks.handler.RegistryHandler
 import com.cleanroommc.retrosophisticatedbackpacks.item.Items
 import com.cleanroommc.retrosophisticatedbackpacks.proxy.RSBProxy
 import com.cleanroommc.retrosophisticatedbackpacks.util.Utils.asTranslationKey
+import cpw.mods.fml.common.Mod
+import cpw.mods.fml.common.Mod.EventHandler
+import cpw.mods.fml.common.SidedProxy
+import cpw.mods.fml.common.event.FMLInitializationEvent
+import cpw.mods.fml.common.event.FMLPostInitializationEvent
+import cpw.mods.fml.common.event.FMLPreInitializationEvent
+import cpw.mods.fml.common.event.FMLServerStoppedEvent
+import cpw.mods.fml.common.network.NetworkRegistry
 import net.minecraft.creativetab.CreativeTabs
-import net.minecraft.item.ItemStack
-import net.minecraftforge.fml.common.Loader
-import net.minecraftforge.fml.common.Mod
-import net.minecraftforge.fml.common.SidedProxy
-import net.minecraftforge.fml.common.event.FMLInitializationEvent
-import net.minecraftforge.fml.common.event.FMLPostInitializationEvent
-import net.minecraftforge.fml.common.event.FMLPreInitializationEvent
-import net.minecraftforge.fml.common.event.FMLServerStoppedEvent
+import net.minecraft.item.Item
+import net.minecraftforge.common.MinecraftForge
 import org.apache.logging.log4j.LogManager
 
 @Mod(
     modid = Tags.MOD_ID,
     name = Tags.MOD_NAME,
-    version = Tags.MOD_ID,
-    modLanguageAdapter = "io.github.chaosunity.forgelin.KotlinAdapter",
-    dependencies = "required-after:mixinbooter@[8.0,);" +
-            "required-after:modularui@[3.0.6,);" +
-            "required-after:forgelin_continuous@[2.0.0.0,);" +
-            "after:fluidlogged_api@[1.7,);"
+    version = Tags.VERSION,
+    modLanguageAdapter = "net.shadowfacts.forgelin.KotlinAdapter",
+    dependencies = "required-after:forgelin_continuous"
 )
 object RetroSophisticatedBackpacks {
     val LOGGER = LogManager.getLogger(Tags.MOD_NAME)
 
+    @JvmField
     @SidedProxy(
-        modId = Tags.MOD_ID,
         serverSide = "com.cleanroommc.retrosophisticatedbackpacks.proxy.RSBProxy\$ServerProxy",
         clientSide = "com.cleanroommc.retrosophisticatedbackpacks.proxy.RSBProxy\$ClientProxy"
     )
-    lateinit var proxy: RSBProxy
+    var proxy: RSBProxy? = null
 
-    @Mod.Instance
-    lateinit var instance: RetroSophisticatedBackpacks
+    @JvmField
+    @Mod.Instance(Tags.MOD_ID)
+    var instance: Any? = null
 
-    var baublesLoaded = false
-        private set
-
-    val CREATIVE_TAB = object : CreativeTabs("creative_tab".asTranslationKey()) {
-        override fun createIcon(): ItemStack =
-            ItemStack(Items.backpackLeather)
+    val CREATIVE_TAB: CreativeTabs = object : CreativeTabs("creative_tab".asTranslationKey()) {
+        override fun getTabIconItem(): Item =
+            Items.backpackLeather ?: Items.ITEMS.firstOrNull() ?: Item.getItemById(1)
     }
 
-    @Mod.EventHandler
+    @EventHandler
     fun preInit(event: FMLPreInitializationEvent) {
-        CapabilityHandler.register()
-
-        baublesLoaded = Loader.isModLoaded("baubles")
-
-        proxy.preInit(event)
+        proxy?.preInit(event)
     }
 
-    @Mod.EventHandler
+    @EventHandler
     fun init(event: FMLInitializationEvent) {
+        RegistryHandler.registerAll()
         NetworkHandler.register()
-
-        proxy.init(event)
+        NetworkRegistry.INSTANCE.registerGuiHandler(instance, BackpackGuiHandler)
+        MinecraftForge.EVENT_BUS.register(EntityEventHandler)
+        proxy?.init(event)
     }
 
-    @Mod.EventHandler
+    @EventHandler
     fun postInit(event: FMLPostInitializationEvent) {
-        proxy.postInit(event)
+        proxy?.postInit(event)
     }
 
-    @Mod.EventHandler
+    @EventHandler
     fun onShutdown(event: FMLServerStoppedEvent) {
         CapabilityHandler.BACKPACK_INVENTORY_CACHE.clear()
         LOGGER.info("Backpack UUID cache has been cleared")
