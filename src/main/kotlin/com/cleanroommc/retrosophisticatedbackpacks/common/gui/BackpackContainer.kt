@@ -3,6 +3,8 @@ package com.cleanroommc.retrosophisticatedbackpacks.common.gui
 import com.cleanroommc.retrosophisticatedbackpacks.capability.BackpackHelper
 import com.cleanroommc.retrosophisticatedbackpacks.capability.BackpackWrapper
 import com.cleanroommc.retrosophisticatedbackpacks.item.BackpackItem
+import com.cleanroommc.retrosophisticatedbackpacks.item.ExponentialStackUpgradeItem
+import com.cleanroommc.retrosophisticatedbackpacks.item.StackUpgradeItem
 import com.cleanroommc.retrosophisticatedbackpacks.item.UpgradeItem
 import com.cleanroommc.retrosophisticatedbackpacks.inventory.SimpleInventoryAdapter
 import net.minecraft.entity.player.EntityPlayer
@@ -53,6 +55,8 @@ open class BackpackContainer(
                     // Prevent inserting the currently-open backpack into itself
                     return BackpackHelper.getWrapper(stack)?.uuid != wrapper.uuid
                 }
+                override fun getSlotStackLimit(): Int =
+                    64 * wrapper.getTotalStackMultiplier()
             })
         }
 
@@ -64,6 +68,12 @@ open class BackpackContainer(
                 override fun isItemValid(stack: ItemStack): Boolean =
                     stack.item is UpgradeItem
                 override fun getSlotStackLimit(): Int = 1
+                override fun canTakeStack(player: EntityPlayer): Boolean {
+                    val item = stack?.item ?: return true
+                    if (item is ExponentialStackUpgradeItem) return wrapper.canRemoveExponentialStackUpgrade()
+                    if (item is StackUpgradeItem) return wrapper.canRemoveStackUpgrade(item.multiplier())
+                    return true
+                }
             })
         }
 
@@ -91,6 +101,104 @@ open class BackpackContainer(
     }
 
     override fun canInteractWith(player: EntityPlayer): Boolean = true
+
+    /**
+     * Override click handling for oversized stacks (> item.maxStackSize).
+     * Left-click: pick up 64; right-click: pick up 32. Vanilla breaks on stacks > 64.
+     */
+    override fun slotClick(slotId: Int, button: Int, mode: Int, player: EntityPlayer): ItemStack? {
+        if (mode == 0 && slotId in backpackSlotStart until backpackSlotEnd) {
+            val slot = inventorySlots[slotId] as? Slot ?: return super.slotClick(slotId, button, mode, player)
+            val slotStack = slot.stack
+            val cursor = player.inventory.itemStack
+            val oversized = slotStack != null && slotStack.stackSize > slotStack.maxStackSize
+
+            if (button == 0 && cursor != null && slotStack != null) {
+                val sameItem = cursor.item == slotStack.item &&
+                    (!cursor.hasSubtypes || cursor.itemDamage == slotStack.itemDamage) &&
+                    ItemStack.areItemStackTagsEqual(cursor, slotStack)
+
+                if (sameItem && slot.isItemValid(cursor)) {
+                    // Merge cursor into slot up to the multiplied limit; vanilla caps at maxStackSize so we handle it.
+                    val limit = slotStack.maxStackSize * wrapper.getTotalStackMultiplier()
+                    if (slotStack.stackSize < limit) {
+                        val toAdd = minOf(cursor.stackSize, limit - slotStack.stackSize)
+                        slotStack.stackSize += toAdd
+                        slot.onSlotChanged()
+                        cursor.stackSize -= toAdd
+                        if (cursor.stackSize <= 0) player.inventory.itemStack = null
+                    }
+                    // Slot is full or items merged — either way, no swap allowed.
+                    return slotStack.copy()
+                }
+
+                // Different items and slot has an oversized stack: block the swap entirely.
+                if (oversized) return null
+            }
+
+            // Left/right click with empty cursor on an oversized stack: pick up 64 or 32.
+            if (cursor == null && oversized) {
+                val toPickUp = if (button == 0) minOf(64, slotStack!!.stackSize) else minOf(32, slotStack!!.stackSize)
+                val picked = slot.decrStackSize(toPickUp)
+                if (picked != null) {
+                    player.inventory.itemStack = picked
+                    slot.onPickupFromSlot(player, picked)
+                }
+                return picked
+            }
+        }
+        return super.slotClick(slotId, button, mode, player)
+    }
+
+    /** Vanilla mergeItemStack caps at item.maxStackSize; override to respect backpack stack multiplier. */
+    override fun mergeItemStack(stack: ItemStack, startIndex: Int, endIndex: Int, reverseOrder: Boolean): Boolean {
+        val multiplier = wrapper.getTotalStackMultiplier()
+        if (multiplier <= 1) return super.mergeItemStack(stack, startIndex, endIndex, reverseOrder)
+
+        var merged = false
+        var k = if (reverseOrder) endIndex - 1 else startIndex
+
+        // Phase 1: stack into existing matching slots
+        if (stack.isStackable) {
+            while (stack.stackSize > 0 && (if (reverseOrder) k >= startIndex else k < endIndex)) {
+                val slot = inventorySlots[k] as Slot
+                val existing = slot.stack
+                if (existing != null && existing.item == stack.item &&
+                    (!stack.hasSubtypes || stack.itemDamage == existing.itemDamage) &&
+                    ItemStack.areItemStackTagsEqual(stack, existing)) {
+                    val limit = if (k in backpackSlotStart until backpackSlotEnd)
+                        existing.maxStackSize * multiplier else existing.maxStackSize
+                    val total = existing.stackSize + stack.stackSize
+                    when {
+                        total <= limit -> { stack.stackSize = 0; existing.stackSize = total; slot.onSlotChanged(); merged = true }
+                        existing.stackSize < limit -> { stack.stackSize -= limit - existing.stackSize; existing.stackSize = limit; slot.onSlotChanged(); merged = true }
+                    }
+                }
+                k += if (reverseOrder) -1 else 1
+            }
+        }
+
+        // Phase 2: place into empty slots
+        if (stack.stackSize > 0) {
+            k = if (reverseOrder) endIndex - 1 else startIndex
+            while (if (reverseOrder) k >= startIndex else k < endIndex) {
+                val slot = inventorySlots[k] as Slot
+                if (slot.stack == null && slot.isItemValid(stack)) {
+                    val limit = if (k in backpackSlotStart until backpackSlotEnd)
+                        stack.maxStackSize * multiplier else stack.maxStackSize
+                    val toPlace = minOf(stack.stackSize, limit)
+                    slot.putStack(stack.copy().also { it.stackSize = toPlace })
+                    slot.onSlotChanged()
+                    stack.stackSize -= toPlace
+                    merged = true
+                    if (stack.stackSize <= 0) break
+                }
+                k += if (reverseOrder) -1 else 1
+            }
+        }
+
+        return merged
+    }
 
     override fun transferStackInSlot(player: EntityPlayer, slotIndex: Int): ItemStack? {
         val slot = inventorySlots[slotIndex] as? Slot ?: return null

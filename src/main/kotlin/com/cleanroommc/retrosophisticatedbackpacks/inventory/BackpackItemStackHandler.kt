@@ -13,6 +13,8 @@ class BackpackItemStackHandler(size: Int, private val wrapper: BackpackWrapper) 
     val memorizedSlotRespectNbtList: MutableList<Boolean> = MutableList(size) { false }
     val sortLockedSlots: MutableList<Boolean> = MutableList(size) { false }
 
+    override fun getInventoryStackLimit(): Int = 64 * wrapper.getTotalStackMultiplier()
+
     override fun isItemValid(slot: Int, stack: ItemStack): Boolean {
         val regName = GameRegistry.findUniqueIdentifierFor(stack.item)?.toString()
         if (Config.blacklistedItems.contains(regName)) return false

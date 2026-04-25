@@ -42,7 +42,7 @@ class SimpleInventoryAdapter(
 
     override fun hasCustomInventoryName(): Boolean = false
 
-    override fun getInventoryStackLimit(): Int = 64
+    override fun getInventoryStackLimit(): Int = delegate.getInventoryStackLimit()
 
     override fun markDirty() {}
 

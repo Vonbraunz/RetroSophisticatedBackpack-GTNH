@@ -7,4 +7,6 @@ import com.cleanroommc.retrosophisticatedbackpacks.util.INBTSerializable
 
 sealed interface IRestockUpgrade : ISidelessCapabilityProvider, INBTSerializable<NBTTagCompound> {
     fun canRestock(stack: ItemStack): Boolean
+    /** Basic restock only pulls items already in the backpack; advanced pulls everything. */
+    val restocksFromEmptySlots: Boolean get() = false
 }

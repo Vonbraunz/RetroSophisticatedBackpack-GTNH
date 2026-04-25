@@ -20,6 +20,7 @@ import net.minecraft.inventory.IInventory
 import net.minecraft.item.ItemBlock
 import net.minecraft.item.ItemStack
 import net.minecraft.util.IIcon
+import net.minecraft.util.MovingObjectPosition
 import net.minecraft.util.StatCollector
 import net.minecraft.world.World
 
@@ -38,35 +39,42 @@ class BackpackItem(block: net.minecraft.block.Block) : ItemBlock(block), IModelR
         RegistryHandler.MODELS.add(this)
     }
 
-    // Shift-click on a block → deposit/restock with that block's inventory
+    // onItemUseFirst always returns false — deposit/restock is handled in onItemUse server-side.
+    // Doing it here caused sneak-state race conditions at close range.
     override fun onItemUseFirst(
         stack: ItemStack, player: EntityPlayer, world: World,
         x: Int, y: Int, z: Int, side: Int,
         hitX: Float, hitY: Float, hitZ: Float
-    ): Boolean {
-        if (player.isSneaking) {
-            val te = world.getTileEntity(x, y, z) as? IInventory ?: return false
-            val wrapper = getOrCreateWrapper(stack) ?: return false
-            var transferred = BackpackInventoryHelper.attemptDepositOnInventory(wrapper, te)
-            transferred = BackpackInventoryHelper.attemptRestockFromInventory(wrapper, te) || transferred
-            if (transferred) {
-                BackpackHelper.saveWrapper(stack, wrapper)
-                world.playSoundAtEntity(player, "mob.armor.equip_iron", 0.5f, 0.5f)
-                return true
-            }
-        }
-        return false
-    }
+    ): Boolean = false
 
-    // Normal right-click on block: if sneaking, place block; otherwise open GUI
+    // Shift-click on a block → deposit/restock; normal click → open GUI.
     override fun onItemUse(
         stack: ItemStack, player: EntityPlayer, world: World,
         x: Int, y: Int, z: Int, side: Int,
         hitX: Float, hitY: Float, hitZ: Float
     ): Boolean {
-        val te = world.getTileEntity(x, y, z)
-        if (player.isSneaking && te != null) {
-            return super.onItemUse(stack, player, world, x, y, z, side, hitX, hitY, hitZ)
+        if (player.isSneaking) {
+            if (!world.isRemote) {
+                // At close range the packet coords can miss the chest's non-full hitbox;
+                // try them first, then fall back to a fresh server-side raycast.
+                val inv = world.getTileEntity(x, y, z) as? IInventory
+                    ?: run {
+                        val mop = player.rayTrace(5.0, 1.0f)
+                        if (mop?.typeOfHit == MovingObjectPosition.MovingObjectType.BLOCK)
+                            world.getTileEntity(mop.blockX, mop.blockY, mop.blockZ) as? IInventory
+                        else null
+                    }
+                if (inv != null) {
+                    val wrapper = getOrCreateWrapper(stack) ?: return true
+                    var transferred = BackpackInventoryHelper.attemptDepositOnInventory(wrapper, inv)
+                    transferred = BackpackInventoryHelper.attemptRestockFromInventory(wrapper, inv) || transferred
+                    if (transferred) {
+                        BackpackHelper.saveWrapper(stack, wrapper)
+                        world.playSoundAtEntity(player, "mob.armor.equip_iron", 0.5f, 0.5f)
+                    }
+                }
+            }
+            return true // always consume when sneaking — never open GUI or place block
         }
         if (!world.isRemote) {
             ensureWrapper(stack)
@@ -103,7 +111,11 @@ class BackpackItem(block: net.minecraft.block.Block) : ItemBlock(block), IModelR
     override fun onUpdate(stack: ItemStack, world: World, entity: Entity, slot: Int, selected: Boolean) {
         if (!world.isRemote && entity is EntityPlayerMP) {
             val wrapper = BackpackHelper.getWrapper(stack) ?: return
-            if (entity.ticksExisted % 20 == 0) wrapper.feed(entity, wrapper.backpackItemStackHandler)
+            if (entity.ticksExisted % 20 == 0) {
+                if (wrapper.feed(entity, wrapper.backpackItemStackHandler)) {
+                    BackpackHelper.saveWrapper(stack, wrapper)
+                }
+            }
             if (!wrapper.isCached) CapabilityHandler.cacheBackpackInventory(wrapper)
         }
     }

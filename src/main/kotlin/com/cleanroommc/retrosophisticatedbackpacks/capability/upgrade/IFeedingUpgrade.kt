@@ -16,12 +16,11 @@ sealed interface IFeedingUpgrade : ISidelessCapabilityProvider, INBTSerializable
         if (!entity.canEat(false)) return false
 
         val slot = getFoodSlot(handler, entity.foodStats.foodLevel, entity.health, entity.maxHealth)
-        if (slot > -1) {
-            val food = handler.extractItem(slot, Int.MAX_VALUE, false) ?: return false
-            val remaining = food.item.onEaten(food, entity.worldObj, entity)
-            handler.insertItem(slot, remaining, false)
-        }
+        if (slot < 0) return false
 
-        return false
+        val food = handler.extractItem(slot, Int.MAX_VALUE, false) ?: return false
+        val remaining = food.item.onEaten(food, entity.worldObj, entity)
+        if (remaining != null && remaining.stackSize > 0) handler.insertItem(slot, remaining, false)
+        return true
     }
 }

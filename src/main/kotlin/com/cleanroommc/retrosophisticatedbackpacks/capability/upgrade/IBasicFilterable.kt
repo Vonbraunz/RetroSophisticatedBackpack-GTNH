@@ -14,7 +14,10 @@ interface IBasicFilterable : ISidelessCapabilityProvider {
     var filterType: FilterType
 
     fun checkFilter(stack: ItemStack): Boolean = when (filterType) {
-        FilterType.WHITELIST -> filterItems.inventory.any { it != null && it.item == stack.item && ItemStack.areItemStackTagsEqual(it, stack) }
+        FilterType.WHITELIST -> {
+            val hasFilter = filterItems.inventory.any { it != null && it.stackSize > 0 }
+            !hasFilter || filterItems.inventory.any { it != null && it.item == stack.item && ItemStack.areItemStackTagsEqual(it, stack) }
+        }
         FilterType.BLACKLIST -> filterItems.inventory.none { it != null && it.item == stack.item && ItemStack.areItemStackTagsEqual(it, stack) }
     }
 

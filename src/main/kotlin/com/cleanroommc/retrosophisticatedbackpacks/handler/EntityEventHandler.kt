@@ -2,6 +2,7 @@ package com.cleanroommc.retrosophisticatedbackpacks.handler
 
 import com.cleanroommc.retrosophisticatedbackpacks.backpack.BackpackInventoryHelper
 import com.cleanroommc.retrosophisticatedbackpacks.capability.BackpackHelper
+import com.cleanroommc.retrosophisticatedbackpacks.capability.BackpackWrapper
 import com.cleanroommc.retrosophisticatedbackpacks.item.BackpackItem
 import net.minecraft.entity.item.EntityItem
 import net.minecraft.item.ItemStack
@@ -46,10 +47,14 @@ object EntityEventHandler {
             if (inventoryStack.item !is BackpackItem) continue
             val wrapper = BackpackHelper.getWrapper(inventoryStack) ?: continue
             if (!wrapper.canPickupItem(remaining ?: return null)) continue
+            val before = remaining!!.stackSize
             var slotIndex = 0
             while (remaining != null && slotIndex < wrapper.getSlots()) {
                 remaining = wrapper.backpackItemStackHandler.prioritizedInsertion(slotIndex, remaining, false)
                 slotIndex++
+            }
+            if (remaining == null || remaining.stackSize < before) {
+                BackpackHelper.saveWrapper(inventoryStack, wrapper)
             }
             if (remaining == null) break
         }

@@ -24,6 +24,8 @@ open class SimpleInventory(val size: Int) : INBTSerializable<NBTTagCompound> {
         onContentsChanged(index)
     }
 
+    open fun getInventoryStackLimit(): Int = 64
+
     open fun isItemValid(slot: Int, stack: ItemStack): Boolean = true
 
     open fun getStackLimit(slot: Int, stack: ItemStack): Int = stack.maxStackSize

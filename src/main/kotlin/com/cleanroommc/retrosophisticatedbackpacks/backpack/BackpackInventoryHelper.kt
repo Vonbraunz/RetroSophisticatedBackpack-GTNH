@@ -1,6 +1,8 @@
 package com.cleanroommc.retrosophisticatedbackpacks.backpack
 
 import com.cleanroommc.retrosophisticatedbackpacks.capability.BackpackWrapper
+import com.cleanroommc.retrosophisticatedbackpacks.capability.upgrade.IDepositUpgrade
+import com.cleanroommc.retrosophisticatedbackpacks.capability.upgrade.IRestockUpgrade
 import com.cleanroommc.retrosophisticatedbackpacks.inventory.BackpackItemStackHandler
 import com.cleanroommc.retrosophisticatedbackpacks.inventory.SimpleInventory
 import com.cleanroommc.retrosophisticatedbackpacks.item.BackpackItem
@@ -141,14 +143,22 @@ object BackpackInventoryHelper {
 
     fun attemptDepositOnInventory(wrapper: BackpackWrapper, destination: IInventory): Boolean {
         if (isInventoryFull(destination)) return false
+        val depositUpgrades = wrapper.gatherUpgrades<IDepositUpgrade>()
+        val depositsToEmpty = depositUpgrades.any { it.depositsToEmptySlots }
         var transferred = false
         val backpackInventory = wrapper.backpackItemStackHandler
 
         for (i in 0 until backpackInventory.slots) {
             if (!wrapper.canDeposit(i)) continue
             val stack = wrapper.getStackInSlot(i) ?: continue
+
+            // Basic deposit: only deposit item types that already exist in the destination.
+            // Advanced deposit: deposit everything regardless.
+            val shouldDeposit = depositsToEmpty || destinationHasItem(destination, stack)
+            if (!shouldDeposit) continue
+
             val before = stack.stackSize
-            val remaining = insertItemStackedIntoInventory(destination, stack.copy(), false)
+            val remaining = insertItemStackedIntoInventory(destination, stack.copy(), false, fillEmptySlots = true)
             val deposited = before - (remaining?.stackSize ?: 0)
             if (deposited > 0) {
                 transferred = true
@@ -156,6 +166,14 @@ object BackpackInventoryHelper {
             }
         }
         return transferred
+    }
+
+    private fun destinationHasItem(inv: IInventory, stack: ItemStack): Boolean {
+        for (i in 0 until inv.sizeInventory) {
+            val existing = inv.getStackInSlot(i) ?: continue
+            if (existing.stackSize > 0 && SimpleInventory.canStack(existing, stack)) return true
+        }
+        return false
     }
 
     fun attemptRestockFromTileEntity(wrapper: BackpackWrapper, source: TileEntity): Boolean {
@@ -171,12 +189,18 @@ object BackpackInventoryHelper {
     fun attemptRestockFromInventory(wrapper: BackpackWrapper, source: IInventory): Boolean {
         val backpackInventory = wrapper.backpackItemStackHandler
         if (isFull(backpackInventory)) return false
+        val restockUpgrades = wrapper.gatherUpgrades<IRestockUpgrade>()
+        val restocksFromEmpty = restockUpgrades.any { it.restocksFromEmptySlots }
         var transferred = false
 
         for (i in 0 until source.sizeInventory) {
             val sourceStack = source.getStackInSlot(i) ?: continue
             if (sourceStack.stackSize <= 0) continue
             if (!wrapper.canRestock(sourceStack)) continue
+
+            // Basic restock: only pull items that already exist in the backpack.
+            // Advanced restock: pull everything regardless.
+            if (!restocksFromEmpty && !backpackHasItem(backpackInventory, sourceStack)) continue
 
             val remaining = insertItemStackedIntoBackpack(backpackInventory, sourceStack.copy(), false)
             val moved = sourceStack.stackSize - (remaining?.stackSize ?: 0)
@@ -190,7 +214,15 @@ object BackpackInventoryHelper {
         return transferred
     }
 
-    private fun insertItemStackedIntoInventory(inv: IInventory, stack: ItemStack, simulate: Boolean): ItemStack? {
+    private fun backpackHasItem(backpack: BackpackItemStackHandler, stack: ItemStack): Boolean {
+        for (i in 0 until backpack.slots) {
+            val existing = backpack.getStackInSlot(i) ?: continue
+            if (existing.stackSize > 0 && SimpleInventory.canStack(existing, stack)) return true
+        }
+        return false
+    }
+
+    private fun insertItemStackedIntoInventory(inv: IInventory, stack: ItemStack, simulate: Boolean, fillEmptySlots: Boolean = true): ItemStack? {
         var remaining = stack.copy()
         val invLimit = inv.inventoryStackLimit
         // Pass 1: merge with existing
@@ -207,18 +239,20 @@ object BackpackInventoryHelper {
             remaining.stackSize -= toAdd
             if (remaining.stackSize <= 0) return null
         }
-        // Pass 2: empty slots
-        for (i in 0 until inv.sizeInventory) {
-            val existing = inv.getStackInSlot(i)
-            if (existing != null && existing.stackSize > 0) continue
-            if (!inv.isItemValidForSlot(i, remaining)) continue
-            val toPlace = min(min(invLimit, remaining.maxStackSize), remaining.stackSize)
-            if (!simulate) {
-                inv.setInventorySlotContents(i, remaining.copy().also { it.stackSize = toPlace })
-                inv.markDirty()
+        // Pass 2: empty slots (advanced deposit only)
+        if (fillEmptySlots) {
+            for (i in 0 until inv.sizeInventory) {
+                val existing = inv.getStackInSlot(i)
+                if (existing != null && existing.stackSize > 0) continue
+                if (!inv.isItemValidForSlot(i, remaining)) continue
+                val toPlace = min(min(invLimit, remaining.maxStackSize), remaining.stackSize)
+                if (!simulate) {
+                    inv.setInventorySlotContents(i, remaining.copy().also { it.stackSize = toPlace })
+                    inv.markDirty()
+                }
+                remaining.stackSize -= toPlace
+                if (remaining.stackSize <= 0) return null
             }
-            remaining.stackSize -= toPlace
-            if (remaining.stackSize <= 0) return null
         }
         return if (remaining.stackSize <= 0) null else remaining
     }
