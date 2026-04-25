@@ -27,32 +27,32 @@ object RecipeHandler {
             'C', MCBlocks.chest
         )
         // Iron: UUU / UBU / UUU — surrounding with iron ingots upgrades the previous tier
-        GameRegistry.addShapedRecipe(
+        GameRegistry.addRecipe(BackpackUpgradeRecipe(
             ItemStack(RSBItems.backpackIron),
             "UUU", "UBU", "UUU",
             'U', MCItems.iron_ingot,
-            'B', RSBItems.backpackLeather
-        )
-        GameRegistry.addShapedRecipe(
+            'B', RSBItems.backpackLeather!!
+        ))
+        GameRegistry.addRecipe(BackpackUpgradeRecipe(
             ItemStack(RSBItems.backpackGold),
             "UUU", "UBU", "UUU",
             'U', MCItems.gold_ingot,
-            'B', RSBItems.backpackIron
-        )
-        GameRegistry.addShapedRecipe(
+            'B', RSBItems.backpackIron!!
+        ))
+        GameRegistry.addRecipe(BackpackUpgradeRecipe(
             ItemStack(RSBItems.backpackDiamond),
             "UUU", "UBU", "UUU",
             'U', MCItems.diamond,
-            'B', RSBItems.backpackGold
-        )
+            'B', RSBItems.backpackGold!!
+        ))
         // Obsidian: UNU / NBN / UNU
-        GameRegistry.addShapedRecipe(
+        GameRegistry.addRecipe(BackpackUpgradeRecipe(
             ItemStack(RSBItems.backpackObsidian),
             "UNU", "NBN", "UNU",
             'U', MCBlocks.obsidian,
             'N', MCItems.nether_star,
-            'B', RSBItems.backpackDiamond
-        )
+            'B', RSBItems.backpackDiamond!!
+        ))
     }
 
     private fun upgradeBase() {

@@ -1,6 +1,7 @@
 package com.cleanroommc.retrosophisticatedbackpacks.proxy
 
 import com.cleanroommc.retrosophisticatedbackpacks.block.Blocks
+import com.cleanroommc.retrosophisticatedbackpacks.client.RSBBlockRenderTypes
 import com.cleanroommc.retrosophisticatedbackpacks.client.gui.GuiBackpack
 import com.cleanroommc.retrosophisticatedbackpacks.common.gui.BackpackContainer
 import com.cleanroommc.retrosophisticatedbackpacks.config.Config
@@ -49,6 +50,11 @@ abstract class RSBProxy {
                 Keyboard.KEY_B,
                 "key.category".asTranslationKey()
             )
+        }
+
+        override fun preInit(event: FMLPreInitializationEvent) {
+            super.preInit(event)
+            RSBBlockRenderTypes.register()
         }
 
         override fun init(event: FMLInitializationEvent) {

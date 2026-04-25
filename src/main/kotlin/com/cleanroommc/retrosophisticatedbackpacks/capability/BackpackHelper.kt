@@ -1,5 +1,6 @@
 package com.cleanroommc.retrosophisticatedbackpacks.capability
 
+import com.cleanroommc.retrosophisticatedbackpacks.item.BackpackItem
 import net.minecraft.item.ItemStack
 import net.minecraft.nbt.NBTTagCompound
 
@@ -9,10 +10,17 @@ object BackpackHelper {
 
     fun getWrapper(stack: ItemStack?): BackpackWrapper? {
         if (stack == null || stack.stackSize <= 0) return null
-        val nbt = stack.tagCompound ?: return BackpackWrapper()
-        val dataTag = nbt.getCompoundTag(BACKPACK_DATA_TAG)
-        val wrapper = BackpackWrapper()
-        wrapper.deserializeNBT(dataTag)
+        val item = stack.item as? BackpackItem ?: return null
+        val nbt = stack.tagCompound
+        // Always derive sizes from item type so server and client agree on slot count,
+        // regardless of stale sizes that may be stored in old NBT.
+        val wrapper = BackpackWrapper({ item.numberOfSlots }, { item.numberOfUpgradeSlots })
+        if (nbt != null) {
+            val dataTag = nbt.getCompoundTag(BACKPACK_DATA_TAG)
+            dataTag.setInteger("BackpackInventorySize", item.numberOfSlots)
+            dataTag.setInteger("UpgradeSlotsSize", item.numberOfUpgradeSlots)
+            wrapper.deserializeNBT(dataTag)
+        }
         return wrapper
     }
 

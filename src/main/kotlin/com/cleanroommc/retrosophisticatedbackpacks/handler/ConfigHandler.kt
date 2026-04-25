@@ -8,7 +8,6 @@ import com.cleanroommc.retrosophisticatedbackpacks.Tags
 // Registered manually in RetroSophisticatedBackpacks.init via MinecraftForge.EVENT_BUS.register
 object ConfigHandler {
     @SubscribeEvent
-    @JvmStatic
     fun onConfigChange(event: ConfigChangedEvent.OnConfigChangedEvent) {
         if (event.modID == Tags.MOD_ID) {
             Config.syncConfig()

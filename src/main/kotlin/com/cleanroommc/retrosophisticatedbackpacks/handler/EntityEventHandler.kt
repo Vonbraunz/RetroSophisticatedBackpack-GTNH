@@ -13,7 +13,6 @@ import cpw.mods.fml.common.eventhandler.SubscribeEvent
 object EntityEventHandler {
 
     @SubscribeEvent
-    @JvmStatic
     fun onItemPickup(event: EntityItemPickupEvent) {
         val player = event.entityPlayer
         val entityItem = event.item
@@ -58,7 +57,6 @@ object EntityEventHandler {
     }
 
     @SubscribeEvent
-    @JvmStatic
     fun onEntityInteract(event: EntityInteractEvent) {
         val player = event.entityPlayer
         val stack = player.getHeldItem() ?: return

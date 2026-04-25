@@ -3,6 +3,7 @@ package com.cleanroommc.retrosophisticatedbackpacks.block
 import com.cleanroommc.retrosophisticatedbackpacks.RetroSophisticatedBackpacks
 import com.cleanroommc.retrosophisticatedbackpacks.Tags
 import com.cleanroommc.retrosophisticatedbackpacks.backpack.BackpackTier
+import com.cleanroommc.retrosophisticatedbackpacks.client.RSBBlockRenderTypes
 import com.cleanroommc.retrosophisticatedbackpacks.capability.BackpackHelper
 import com.cleanroommc.retrosophisticatedbackpacks.handler.RegistryHandler
 import com.cleanroommc.retrosophisticatedbackpacks.tileentity.BackpackTileEntity
@@ -56,6 +57,8 @@ class BackpackBlock(
     override fun getIcon(side: Int, meta: Int): IIcon = clipsIcon ?: super.getIcon(side, meta)
 
     override fun isOpaqueCube(): Boolean = false
+
+    override fun getRenderType(): Int = RSBBlockRenderTypes.BACKPACK_RENDER_TYPE
 
     override fun setBlockBoundsBasedOnState(worldIn: IBlockAccess, x: Int, y: Int, z: Int) {
         val meta = worldIn.getBlockMetadata(x, y, z)

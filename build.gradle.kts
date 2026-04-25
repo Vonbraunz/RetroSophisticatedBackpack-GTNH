@@ -134,6 +134,9 @@ dependencies {
         annotationProcessor(mixin) { isTransitive = false }
     }
 
+    // NEI for in-dev testing
+    runtimeOnly("com.github.GTNewHorizons:NotEnoughItems:2.8.91-GTNH:dev")
+
     // Baubles removed — no bauble slot in this port
 }
 

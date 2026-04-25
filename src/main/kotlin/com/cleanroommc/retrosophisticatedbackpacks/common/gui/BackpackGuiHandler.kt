@@ -28,11 +28,12 @@ object BackpackGuiHandler : IGuiHandler {
             BackpackContainer(te.wrapper, null, player)
         }
         BACKPACK_ITEM_GUI_ID -> {
-            val (wrapper, slotIndex) = resolveItemWrapper(player) ?: return null
-            object : BackpackContainer(wrapper, slotIndex, player) {
+            val slotIndex = x
+            val (wrapper, slot) = resolveItemWrapper(player, slotIndex) ?: return null
+            object : BackpackContainer(wrapper, slot, player) {
                 override fun onContainerClosed(player: EntityPlayer) {
                     super.onContainerClosed(player)
-                    val stack = player.inventory.mainInventory[slotIndex] ?: return
+                    val stack = player.inventory.mainInventory[slot] ?: return
                     if (stack.item is BackpackItem) BackpackHelper.saveWrapper(stack, wrapper)
                 }
             }
@@ -51,23 +52,19 @@ object BackpackGuiHandler : IGuiHandler {
             RetroSophisticatedBackpacks.proxy?.createBackpackGui(BackpackContainer(te.wrapper, null, player))
         }
         BACKPACK_ITEM_GUI_ID -> {
-            val (wrapper, slotIndex) = resolveItemWrapper(player) ?: return null
-            RetroSophisticatedBackpacks.proxy?.createBackpackGui(BackpackContainer(wrapper, slotIndex, player))
+            val slotIndex = x
+            val (wrapper, slot) = resolveItemWrapper(player, slotIndex) ?: return null
+            RetroSophisticatedBackpacks.proxy?.createBackpackGui(BackpackContainer(wrapper, slot, player))
         }
         else -> null
     }
 
     // ---- Helpers -----------------------------------------------------------
 
-    /** Finds the first backpack in the player's main inventory and returns its wrapper + slot index. */
-    private fun resolveItemWrapper(player: EntityPlayer): Pair<BackpackWrapper, Int>? {
-        val inv = player.inventory.mainInventory
-        for (i in inv.indices) {
-            val stack = inv[i] ?: continue
-            if (stack.item !is BackpackItem) continue
-            val wrapper = BackpackHelper.getWrapper(stack) ?: continue
-            return wrapper to i
-        }
-        return null
+    private fun resolveItemWrapper(player: EntityPlayer, slotIndex: Int): Pair<BackpackWrapper, Int>? {
+        val stack = player.inventory.mainInventory.getOrNull(slotIndex) ?: return null
+        if (stack.item !is BackpackItem) return null
+        val wrapper = BackpackHelper.getWrapper(stack) ?: return null
+        return wrapper to slotIndex
     }
 }

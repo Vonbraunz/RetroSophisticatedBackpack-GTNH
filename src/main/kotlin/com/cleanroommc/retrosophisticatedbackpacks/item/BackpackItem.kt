@@ -1,6 +1,7 @@
 package com.cleanroommc.retrosophisticatedbackpacks.item
 
 import com.cleanroommc.retrosophisticatedbackpacks.RetroSophisticatedBackpacks
+import com.cleanroommc.retrosophisticatedbackpacks.Tags
 import com.cleanroommc.retrosophisticatedbackpacks.backpack.BackpackInventoryHelper
 import com.cleanroommc.retrosophisticatedbackpacks.block.BackpackBlock
 import com.cleanroommc.retrosophisticatedbackpacks.capability.BackpackHelper
@@ -10,6 +11,7 @@ import com.cleanroommc.retrosophisticatedbackpacks.handler.CapabilityHandler
 import com.cleanroommc.retrosophisticatedbackpacks.handler.RegistryHandler
 import com.cleanroommc.retrosophisticatedbackpacks.util.IModelRegister
 import com.cleanroommc.retrosophisticatedbackpacks.util.Utils.asTranslationKey
+import net.minecraft.client.renderer.texture.IIconRegister
 import net.minecraft.entity.Entity
 import net.minecraft.entity.EntityLivingBase
 import net.minecraft.entity.player.EntityPlayer
@@ -17,6 +19,7 @@ import net.minecraft.entity.player.EntityPlayerMP
 import net.minecraft.inventory.IInventory
 import net.minecraft.item.ItemBlock
 import net.minecraft.item.ItemStack
+import net.minecraft.util.IIcon
 import net.minecraft.util.StatCollector
 import net.minecraft.world.World
 
@@ -67,7 +70,7 @@ class BackpackItem(block: net.minecraft.block.Block) : ItemBlock(block), IModelR
         }
         if (!world.isRemote) {
             ensureWrapper(stack)
-            player.openGui(RetroSophisticatedBackpacks.instance, BackpackGuiHandler.BACKPACK_ITEM_GUI_ID, world, 0, 0, 0)
+            player.openGui(RetroSophisticatedBackpacks.instance, BackpackGuiHandler.BACKPACK_ITEM_GUI_ID, world, player.inventory.currentItem, 0, 0)
         }
         return true
     }
@@ -76,7 +79,7 @@ class BackpackItem(block: net.minecraft.block.Block) : ItemBlock(block), IModelR
     override fun onItemRightClick(stack: ItemStack, world: World, player: EntityPlayer): ItemStack {
         if (!world.isRemote) {
             ensureWrapper(stack)
-            player.openGui(RetroSophisticatedBackpacks.instance, BackpackGuiHandler.BACKPACK_ITEM_GUI_ID, world, 0, 0, 0)
+            player.openGui(RetroSophisticatedBackpacks.instance, BackpackGuiHandler.BACKPACK_ITEM_GUI_ID, world, player.inventory.currentItem, 0, 0)
         }
         return stack
     }
@@ -119,9 +122,17 @@ class BackpackItem(block: net.minecraft.block.Block) : ItemBlock(block), IModelR
         )
     }
 
-    override fun registerModels() {
-        // TODO: register item renderer via IItemRenderer / TESR when rendering layer is ported
+    private var itemIcon: IIcon? = null
+
+    override fun registerIcons(register: IIconRegister) {
+        itemIcon = register.registerIcon("${Tags.MOD_ID}:backpack_${tier.registryName}")
     }
+
+    override fun getIconFromDamage(meta: Int): IIcon = itemIcon ?: super.getIconFromDamage(meta)
+
+    override fun getSpriteNumber(): Int = 1
+
+    override fun registerModels() {}
 
     private fun getOrCreateWrapper(stack: ItemStack): BackpackWrapper? {
         val existing = BackpackHelper.getWrapper(stack)
