@@ -112,15 +112,6 @@ object RecipeHandler {
     }
 
     private fun upgrades() {
-        // Crafting:  T  / IBI /  C  — uses ore dict for chest and ingotIron
-        GameRegistry.addRecipe(ShapedOreRecipe(
-            ItemStack(RSBItems.craftingUpgrade),
-            " T ", "IBI", " C ",
-            'T', MCBlocks.crafting_table,
-            'I', "ingotIron",
-            'B', ItemStack(RSBItems.upgradeBase),
-            'C', "chest"
-        ))
         // Deposit:  P  / IBI / RCR
         GameRegistry.addShapedRecipe(
             ItemStack(RSBItems.depositUpgrade),

@@ -1,5 +1,6 @@
 package com.cleanroommc.retrosophisticatedbackpacks.common.gui
 
+import com.cleanroommc.retrosophisticatedbackpacks.capability.BackpackHelper
 import com.cleanroommc.retrosophisticatedbackpacks.capability.BackpackWrapper
 import com.cleanroommc.retrosophisticatedbackpacks.item.BackpackItem
 import com.cleanroommc.retrosophisticatedbackpacks.item.UpgradeItem
@@ -46,8 +47,12 @@ open class BackpackContainer(
             addSlotToContainer(object : Slot(backpackInv, i,
                 backpackOffsetX + LEFT_PAD + col * SLOT_SIZE,
                 TOP_PAD + row * SLOT_SIZE) {
-                override fun isItemValid(stack: ItemStack): Boolean =
-                    stack.item !is BackpackItem
+                override fun isItemValid(stack: ItemStack): Boolean {
+                    if (stack.item !is BackpackItem) return true
+                    if (!wrapper.canNestBackpack()) return false
+                    // Prevent inserting the currently-open backpack into itself
+                    return BackpackHelper.getWrapper(stack)?.uuid != wrapper.uuid
+                }
             })
         }
 
@@ -104,8 +109,8 @@ open class BackpackContainer(
                 val isUpgrade = stack.item is UpgradeItem
                 if (isUpgrade) {
                     if (!mergeItemStack(stack, upgradeSlotStart, upgradeSlotEnd, false)) return null
-                } else if (stack.item is BackpackItem) {
-                    return null // block shift-clicking backpacks into backpack inventory
+                } else if (stack.item is BackpackItem && !wrapper.canNestBackpack()) {
+                    return null
                 } else {
                     if (!mergeItemStack(stack, backpackSlotStart, backpackSlotEnd, false)) return null
                 }
