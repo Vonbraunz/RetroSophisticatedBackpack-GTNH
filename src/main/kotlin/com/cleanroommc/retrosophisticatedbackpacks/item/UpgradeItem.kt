@@ -1,6 +1,7 @@
 package com.cleanroommc.retrosophisticatedbackpacks.item
 
 import com.cleanroommc.retrosophisticatedbackpacks.RetroSophisticatedBackpacks
+import com.cleanroommc.retrosophisticatedbackpacks.Tags
 import com.cleanroommc.retrosophisticatedbackpacks.capability.upgrade.UpgradeWrapper
 import com.cleanroommc.retrosophisticatedbackpacks.handler.RegistryHandler
 import com.cleanroommc.retrosophisticatedbackpacks.util.Utils.asTranslationKey
@@ -12,6 +13,7 @@ abstract class UpgradeItem(val registryNameStr: String, val hasTab: Boolean = fa
     init {
         setCreativeTab(RetroSophisticatedBackpacks.CREATIVE_TAB)
         setUnlocalizedName(registryNameStr.asTranslationKey())
+        setTextureName("${Tags.MOD_ID}:$registryNameStr")
 
         Items.ITEMS.add(this)
         RegistryHandler.MODELS.add(this)

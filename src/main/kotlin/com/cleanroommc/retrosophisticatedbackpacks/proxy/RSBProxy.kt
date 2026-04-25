@@ -3,6 +3,8 @@ package com.cleanroommc.retrosophisticatedbackpacks.proxy
 import com.cleanroommc.retrosophisticatedbackpacks.block.Blocks
 import com.cleanroommc.retrosophisticatedbackpacks.client.gui.GuiBackpack
 import com.cleanroommc.retrosophisticatedbackpacks.common.gui.BackpackContainer
+import com.cleanroommc.retrosophisticatedbackpacks.config.Config
+import com.cleanroommc.retrosophisticatedbackpacks.handler.ConfigHandler
 import com.cleanroommc.retrosophisticatedbackpacks.item.Items
 import com.cleanroommc.retrosophisticatedbackpacks.util.Utils.asTranslationKey
 import cpw.mods.fml.client.registry.ClientRegistry
@@ -11,11 +13,15 @@ import cpw.mods.fml.common.event.FMLPostInitializationEvent
 import cpw.mods.fml.common.event.FMLPreInitializationEvent
 import net.minecraft.client.settings.KeyBinding
 import net.minecraft.item.Item
+import net.minecraftforge.common.MinecraftForge
 import net.minecraftforge.oredict.OreDictionary
 import org.lwjgl.input.Keyboard
 
 abstract class RSBProxy {
-    open fun preInit(event: FMLPreInitializationEvent) {}
+    open fun preInit(event: FMLPreInitializationEvent) {
+        Config.init(event.modConfigurationDirectory)
+        MinecraftForge.EVENT_BUS.register(ConfigHandler)
+    }
 
     open fun init(event: FMLInitializationEvent) {
         for (backpackItem in Items.BACKPACK_ITEMS) {

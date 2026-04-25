@@ -18,6 +18,7 @@ object RegistryHandler {
         registerItems()
         registerBlocks()
         registerTileEntities()
+        RecipeHandler.registerRecipes()
     }
 
     private fun registerItems() {

@@ -1,6 +1,7 @@
 package com.cleanroommc.retrosophisticatedbackpacks.block
 
 import com.cleanroommc.retrosophisticatedbackpacks.RetroSophisticatedBackpacks
+import com.cleanroommc.retrosophisticatedbackpacks.Tags
 import com.cleanroommc.retrosophisticatedbackpacks.backpack.BackpackTier
 import com.cleanroommc.retrosophisticatedbackpacks.capability.BackpackHelper
 import com.cleanroommc.retrosophisticatedbackpacks.handler.RegistryHandler
@@ -10,12 +11,14 @@ import com.cleanroommc.retrosophisticatedbackpacks.util.Utils.asTranslationKey
 import net.minecraft.block.Block
 import net.minecraft.block.ITileEntityProvider
 import net.minecraft.block.material.Material
+import net.minecraft.client.renderer.texture.IIconRegister
 import net.minecraft.entity.EntityLivingBase
 import net.minecraft.entity.item.EntityItem
 import net.minecraft.entity.player.EntityPlayer
 import net.minecraft.item.Item
 import net.minecraft.item.ItemStack
 import net.minecraft.tileentity.TileEntity
+import net.minecraft.util.IIcon
 import net.minecraft.world.IBlockAccess
 import net.minecraft.world.World
 import java.util.ArrayList
@@ -43,6 +46,14 @@ class BackpackBlock(
         Blocks.BACKPACK_BLOCKS.add(this)
         RegistryHandler.MODELS.add(this)
     }
+
+    private var clipsIcon: IIcon? = null
+
+    override fun registerBlockIcons(register: IIconRegister) {
+        clipsIcon = register.registerIcon("${Tags.MOD_ID}:${tier.registryName}_clips")
+    }
+
+    override fun getIcon(side: Int, meta: Int): IIcon = clipsIcon ?: super.getIcon(side, meta)
 
     override fun isOpaqueCube(): Boolean = false
 
