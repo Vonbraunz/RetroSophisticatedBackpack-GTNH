@@ -1,6 +1,7 @@
 package com.cleanroommc.retrosophisticatedbackpacks.network
 
 import com.cleanroommc.retrosophisticatedbackpacks.capability.BackpackHelper
+import com.cleanroommc.retrosophisticatedbackpacks.capability.upgrade.AdvancedFeedingUpgradeWrapper
 import com.cleanroommc.retrosophisticatedbackpacks.capability.upgrade.IAdvancedFilterable
 import com.cleanroommc.retrosophisticatedbackpacks.capability.upgrade.IBasicFilterable
 import com.cleanroommc.retrosophisticatedbackpacks.capability.upgrade.IFilterUpgrade
@@ -10,12 +11,14 @@ import com.cleanroommc.retrosophisticatedbackpacks.item.UpgradeItem
 import cpw.mods.fml.common.network.simpleimpl.MessageContext
 import io.netty.buffer.ByteBuf
 
-/** Cycle a filter upgrade setting on the server.
+/** Cycle an upgrade setting on the server.
  *  settingId 0 = cycle filterType      (WHITELIST ↔ BLACKLIST)
- *  settingId 1 = cycle filterWay       (IN_OUT → IN → OUT → IN_OUT)
+ *  settingId 1 = cycle filterWay       (IN_OUT → IN → OUT → IN_OUT)    [filter upgrade only]
  *  settingId 2 = cycle matchType       (ITEM → MOD → ORE_DICT → ITEM)  [advanced only]
  *  settingId 3 = toggle ignoreDurability                                [advanced only]
  *  settingId 4 = toggle ignoreNBT                                       [advanced only]
+ *  settingId 5 = cycle hungerFeedingStrategy                            [advanced feeding only]
+ *  settingId 6 = cycle healthFeedingStrategy                            [advanced feeding only]
  */
 class C2SUpgradeSettingPacket() : IRefinedMessage {
     private var upgradeSlotIndex = 0
@@ -66,6 +69,16 @@ class C2SUpgradeSettingPacket() : IRefinedMessage {
                 }
                 3 -> { (wrapper as? IAdvancedFilterable ?: return null).also { it.ignoreDurability = !it.ignoreDurability } }
                 4 -> { (wrapper as? IAdvancedFilterable ?: return null).also { it.ignoreNBT = !it.ignoreNBT } }
+                5 -> {
+                    val adv = wrapper as? AdvancedFeedingUpgradeWrapper ?: return null
+                    val values = AdvancedFeedingUpgradeWrapper.FeedingStrategy.Hunger.entries
+                    adv.hungerFeedingStrategy = values[(adv.hungerFeedingStrategy.ordinal + 1) % values.size]
+                }
+                6 -> {
+                    val adv = wrapper as? AdvancedFeedingUpgradeWrapper ?: return null
+                    val values = AdvancedFeedingUpgradeWrapper.FeedingStrategy.HEALTH.entries
+                    adv.healthFeedingStrategy = values[(adv.healthFeedingStrategy.ordinal + 1) % values.size]
+                }
                 else -> return null
             }
 

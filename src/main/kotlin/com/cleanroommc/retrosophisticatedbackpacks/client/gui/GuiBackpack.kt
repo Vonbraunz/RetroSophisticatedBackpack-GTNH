@@ -1,6 +1,7 @@
 package com.cleanroommc.retrosophisticatedbackpacks.client.gui
 
 import com.cleanroommc.retrosophisticatedbackpacks.Tags
+import com.cleanroommc.retrosophisticatedbackpacks.capability.upgrade.AdvancedFeedingUpgradeWrapper
 import com.cleanroommc.retrosophisticatedbackpacks.capability.upgrade.IAdvancedFilterable
 import com.cleanroommc.retrosophisticatedbackpacks.capability.upgrade.IBasicFilterable
 import com.cleanroommc.retrosophisticatedbackpacks.capability.upgrade.IFilterUpgrade
@@ -69,20 +70,24 @@ class GuiBackpack(private val container: BackpackContainer) : GuiContainer(conta
 
     private fun colsForSlot(upgradeSlotIdx: Int): Int = if (isAdvancedFilter(upgradeSlotIdx)) 4 else 3
 
+    /** Total number of setting buttons shown in the panel for the given upgrade slot. */
+    private fun buttonCount(upgradeSlotIdx: Int): Int {
+        val entry = container.filterWrapperCache[upgradeSlotIdx] ?: return 0
+        val (filterable, _, isAdv) = entry
+        var n = 1                                          // filterType (always)
+        if (filterable is IFilterUpgrade) n++              // filterWay
+        if (isAdv) n += 3                                  // matchType + ignoreDurability + ignoreNBT
+        if (filterable is AdvancedFeedingUpgradeWrapper) n += 2  // hungerStrategy + healthStrategy
+        return n
+    }
+
     private fun panelDimensions(upgradeSlotIdx: Int): Pair<Int, Int> {
         val entry = container.filterWrapperCache[upgradeSlotIdx] ?: return 0 to 0
         val filterable = entry.first
-        val isAdv = entry.third
         val cols = colsForSlot(upgradeSlotIdx)
         val rows = (filterable.filterItems.slots + cols - 1) / cols
-        val hasFilterWay = filterable is IFilterUpgrade
-        val btnCount = 1 +                          // filterType
-                (if (hasFilterWay) 1 else 0) +      // filterWay
-                (if (isAdv) 3 else 0)               // matchType + ignoreDurability + ignoreNBT
-        // Match the full main-panel content width so buttons have plenty of room
         val w = LPAD + container.rowSize * SLOT + LPAD
-        // BTN_GAP separates the slot grid from the first button
-        val h = FP_PAD + TITLE_H + 2 + rows * SLOT + BTN_GAP + btnCount * (BTN_H + BTN_GAP) + FP_PAD
+        val h = FP_PAD + TITLE_H + 2 + rows * SLOT + BTN_GAP + buttonCount(upgradeSlotIdx) * (BTN_H + BTN_GAP) + FP_PAD
         return w to h
     }
 
@@ -242,7 +247,7 @@ class GuiBackpack(private val container: BackpackContainer) : GuiContainer(conta
         val btnW = w - 2 * FP_PAD          // full-width buttons
         var curY = py + FP_PAD
 
-        val title = if (isAdv) "Advanced Filter" else "Basic Filter"
+        val title = entry.second.displayName
         fontRendererObj.drawString(title, innerX, curY + 1, COLOR_TEXT)
         curY += TITLE_H + 2
 
@@ -289,6 +294,27 @@ class GuiBackpack(private val container: BackpackContainer) : GuiContainer(conta
 
             val nbtLabel = "NBT: " + if (advanced.ignoreNBT) "Ignore" else "Exact"
             drawButton(innerX, curY, btnW, BTN_H, nbtLabel,
+                mouseX in innerX until innerX + btnW && mouseY in curY until curY + BTN_H)
+            curY += BTN_H + BTN_GAP
+        }
+
+        // Advanced feeding-specific buttons
+        val advFeeding = filterable as? AdvancedFeedingUpgradeWrapper
+        if (advFeeding != null) {
+            val hungerLabel = "Hunger: " + when (advFeeding.hungerFeedingStrategy) {
+                AdvancedFeedingUpgradeWrapper.FeedingStrategy.Hunger.FULL   -> "Full"
+                AdvancedFeedingUpgradeWrapper.FeedingStrategy.Hunger.HALF   -> "Half"
+                AdvancedFeedingUpgradeWrapper.FeedingStrategy.Hunger.ALWAYS -> "Always"
+            }
+            drawButton(innerX, curY, btnW, BTN_H, hungerLabel,
+                mouseX in innerX until innerX + btnW && mouseY in curY until curY + BTN_H)
+            curY += BTN_H + BTN_GAP
+
+            val healthLabel = "Health: " + when (advFeeding.healthFeedingStrategy) {
+                AdvancedFeedingUpgradeWrapper.FeedingStrategy.HEALTH.ALWAYS -> "Always"
+                AdvancedFeedingUpgradeWrapper.FeedingStrategy.HEALTH.IGNORE -> "Ignore"
+            }
+            drawButton(innerX, curY, btnW, BTN_H, healthLabel,
                 mouseX in innerX until innerX + btnW && mouseY in curY until curY + BTN_H)
         }
     }
@@ -405,6 +431,27 @@ class GuiBackpack(private val container: BackpackContainer) : GuiContainer(conta
                         if (mouseX in innerX until innerX + btnW && mouseY in curY until curY + BTN_H) {
                             advanced.ignoreNBT = !advanced.ignoreNBT
                             NetworkHandler.INSTANCE.sendToServer(C2SUpgradeSettingPacket(upIdx, 4))
+                            return
+                        }
+                        curY += BTN_H + BTN_GAP
+                    }
+
+                    // Advanced feeding strategy buttons
+                    val advFeeding = filterable as? AdvancedFeedingUpgradeWrapper
+                    if (advFeeding != null) {
+                        // hungerFeedingStrategy
+                        if (mouseX in innerX until innerX + btnW && mouseY in curY until curY + BTN_H) {
+                            val values = AdvancedFeedingUpgradeWrapper.FeedingStrategy.Hunger.entries
+                            advFeeding.hungerFeedingStrategy = values[(advFeeding.hungerFeedingStrategy.ordinal + 1) % values.size]
+                            NetworkHandler.INSTANCE.sendToServer(C2SUpgradeSettingPacket(upIdx, 5))
+                            return
+                        }
+                        curY += BTN_H + BTN_GAP
+                        // healthFeedingStrategy
+                        if (mouseX in innerX until innerX + btnW && mouseY in curY until curY + BTN_H) {
+                            val values = AdvancedFeedingUpgradeWrapper.FeedingStrategy.HEALTH.entries
+                            advFeeding.healthFeedingStrategy = values[(advFeeding.healthFeedingStrategy.ordinal + 1) % values.size]
+                            NetworkHandler.INSTANCE.sendToServer(C2SUpgradeSettingPacket(upIdx, 6))
                             return
                         }
                     }

@@ -4,7 +4,6 @@ import com.cleanroommc.retrosophisticatedbackpacks.capability.BackpackHelper
 import com.cleanroommc.retrosophisticatedbackpacks.capability.BackpackWrapper
 import com.cleanroommc.retrosophisticatedbackpacks.capability.upgrade.IAdvancedFilterable
 import com.cleanroommc.retrosophisticatedbackpacks.capability.upgrade.IBasicFilterable
-import com.cleanroommc.retrosophisticatedbackpacks.capability.upgrade.IFilterUpgrade
 import com.cleanroommc.retrosophisticatedbackpacks.capability.upgrade.UpgradeWrapper
 import com.cleanroommc.retrosophisticatedbackpacks.item.BackpackItem
 import com.cleanroommc.retrosophisticatedbackpacks.item.ExponentialStackUpgradeItem
@@ -198,9 +197,8 @@ open class BackpackContainer(
             val upgradeStack = wrapper.upgradeItemStackHandler.inventory.getOrNull(i)
             val upgradeItem  = upgradeStack?.item as? UpgradeItem
             val upgradeWrap  = upgradeItem?.getWrapper(upgradeStack!!)
-            // Only FilterUpgradeItem (not feeding/pickup/etc.) gets a gear panel
-            val advanced     = if (upgradeWrap is IFilterUpgrade) upgradeWrap as? IAdvancedFilterable else null
-            val filterable   = if (upgradeWrap is IFilterUpgrade) advanced ?: (upgradeWrap as? IBasicFilterable) else null
+            val advanced     = upgradeWrap as? IAdvancedFilterable
+            val filterable   = advanced ?: (upgradeWrap as? IBasicFilterable)
 
             if (filterable != null && upgradeStack != null) {
                 swappableFilterInvs[i].delegate = filterable.filterItems
