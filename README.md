@@ -22,18 +22,29 @@ Upgrade tiers by surrounding the previous backpack with the appropriate material
 
 ## Upgrades
 
-- **Deposit** — Shift-click a chest to deposit matching items
-- **Restock** — Shift-click a chest to pull matching items
-- **Pickup** — Auto-collects dropped items into the backpack
-- **Feeding** — Automatically feeds the player from food stored in the backpack
-- **Filter** — Whitelist/blacklist items for auto-interactions
-- **Stack** — Increases the stack size limit for items in the backpack
-- **Inception** — Allows storing backpacks inside backpacks
+| Upgrade | Advanced | Description |
+|---------|----------|-------------|
+| **Pickup** | ✓ | Auto-collects nearby dropped items into the backpack |
+| **Magnet** | ✓ | Actively attracts dropped items within a radius (6 / 10 blocks) |
+| **Deposit** | ✓ | Shift-click a chest/container to deposit matching items |
+| **Restock** | ✓ | Shift-click a chest/container to pull matching items |
+| **Feeding** | ✓ | Automatically feeds the player from food stored in the backpack |
+| **Filter** | ✓ | Controls which items can enter or leave the backpack (in / out / both) |
+| **Stack** | — | Increases the stack size limit for items in the backpack (5 tiers + exponential) |
+| **Inception** | — | Allows storing backpacks inside backpacks |
+
+All upgrades with filtering support a whitelist/blacklist and can be configured via the gear icon in the backpack GUI. Advanced variants add ore dictionary matching, ignore-durability, and ignore-NBT options.
+
+## NEI Integration
+
+- Press **R** on any backpack to see all compatible upgrades
+- Press **U** on any upgrade item to see which backpacks accept it
+- Backpack tier upgrade recipes are visible via standard recipe lookup
 
 ## Requirements
 
 - Minecraft 1.7.10
-- [Forgelin](https://github.com/CleanroomMC/Forgelin-Continuous)
+- [Forgelin-Continuous](https://github.com/CleanroomMC/Forgelin-Continuous)
 
 ## License
 
