@@ -25,12 +25,13 @@ Upgrade tiers by surrounding the previous backpack with the appropriate material
 | Upgrade | Advanced | Description |
 |---------|----------|-------------|
 | **Pickup** | ✓ | Auto-collects nearby dropped items into the backpack |
-| **Magnet** | ✓ | Actively attracts dropped items within a radius (6 / 10 blocks) |
+| **Magnet** | ✓ | Actively attracts dropped items within a radius (5 / 9 blocks) |
+| **Void** | ✓ | Destroys items routed into the backpack that match the filter |
 | **Deposit** | ✓ | Shift-click a chest/container to deposit matching items |
 | **Restock** | ✓ | Shift-click a chest/container to pull matching items |
 | **Feeding** | ✓ | Automatically feeds the player from food stored in the backpack |
 | **Filter** | ✓ | Controls which items can enter or leave the backpack (in / out / both) |
-| **Stack** | — | Increases the stack size limit for items in the backpack (5 tiers + exponential) |
+| **Stack** | — | Increases the stack size limit per slot (5 tiers + exponential); hover the upgrade to see the effective limit |
 | **Inception** | — | Allows storing backpacks inside backpacks |
 
 All upgrades with filtering support a whitelist/blacklist and can be configured via the gear icon in the backpack GUI. Advanced variants add ore dictionary matching, ignore-durability, and ignore-NBT options.
