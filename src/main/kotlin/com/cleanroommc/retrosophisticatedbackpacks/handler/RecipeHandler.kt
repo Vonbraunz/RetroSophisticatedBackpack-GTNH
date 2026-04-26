@@ -166,6 +166,14 @@ object RecipeHandler {
             'R', MCItems.redstone,
             'C', MCBlocks.chest
         )
+        // Magnet: IRI / RBR / IRI
+        GameRegistry.addShapedRecipe(
+            ItemStack(RSBItems.magnetUpgrade),
+            "IRI", "RBR", "IRI",
+            'I', MCItems.iron_ingot,
+            'R', MCItems.redstone,
+            'B', RSBItems.upgradeBase
+        )
         // Inception: ENE / DBD / EDE
         GameRegistry.addShapedRecipe(
             ItemStack(RSBItems.inceptionUpgrade),
@@ -186,6 +194,7 @@ object RecipeHandler {
             RSBItems.advancedFeedingUpgrade  to RSBItems.feedingUpgrade,
             RSBItems.advancedFilterUpgrade   to RSBItems.filterUpgrade,
             RSBItems.advancedRestockUpgrade  to RSBItems.restockUpgrade,
+            RSBItems.advancedMagnetUpgrade   to RSBItems.magnetUpgrade,
         )
         for ((output, base) in adv) {
             GameRegistry.addShapedRecipe(

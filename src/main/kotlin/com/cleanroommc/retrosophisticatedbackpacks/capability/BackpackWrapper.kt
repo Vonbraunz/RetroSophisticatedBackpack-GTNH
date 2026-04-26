@@ -145,6 +145,15 @@ class BackpackWrapper(
         gatherUpgrades<IRestockUpgrade>()
             .any { (it as? IToggleable)?.enabled != false && it.canRestock(stack) }
 
+    fun canMagnetItem(stack: ItemStack): Boolean =
+        gatherUpgrades<IMagnetUpgrade>()
+            .any { (it as? IToggleable)?.enabled != false && it.canMagnet(stack) }
+
+    fun magnetRange(): Double =
+        gatherUpgrades<IMagnetUpgrade>()
+            .filter { (it as? IToggleable)?.enabled != false }
+            .maxOfOrNull { it.range } ?: 0.0
+
     fun canInsert(stack: ItemStack): Boolean {
         val filterUpgrades = gatherUpgrades<IFilterUpgrade>().filter { it.enabled }
         return if (filterUpgrades.isEmpty()) true else filterUpgrades.any { it.canInsert(stack) }

@@ -4,11 +4,12 @@ import com.cleanroommc.retrosophisticatedbackpacks.backpack.BackpackInventoryHel
 import com.cleanroommc.retrosophisticatedbackpacks.capability.BackpackHelper
 import com.cleanroommc.retrosophisticatedbackpacks.capability.BackpackWrapper
 import com.cleanroommc.retrosophisticatedbackpacks.item.BackpackItem
+import cpw.mods.fml.common.eventhandler.SubscribeEvent
+import cpw.mods.fml.common.gameevent.TickEvent
 import net.minecraft.entity.item.EntityItem
 import net.minecraft.item.ItemStack
 import net.minecraftforge.event.entity.player.EntityInteractEvent
 import net.minecraftforge.event.entity.player.EntityItemPickupEvent
-import cpw.mods.fml.common.eventhandler.SubscribeEvent
 
 // Register manually via MinecraftForge.EVENT_BUS.register(EntityEventHandler) in mod init.
 object EntityEventHandler {
@@ -59,6 +60,56 @@ object EntityEventHandler {
             if (remaining == null) break
         }
         return remaining
+    }
+
+    @SubscribeEvent
+    fun onPlayerTick(event: TickEvent.PlayerTickEvent) {
+        if (event.phase != TickEvent.Phase.END) return
+        val player = event.player
+        if (player.worldObj.isRemote) return
+        if (player.ticksExisted % 5 != 0) return
+
+        for (inventoryStack in player.inventory.mainInventory) {
+            if (inventoryStack == null) continue
+            if (inventoryStack.item !is BackpackItem) continue
+            val wrapper = BackpackHelper.getWrapper(inventoryStack) ?: continue
+            val range = wrapper.magnetRange()
+            if (range <= 0.0) continue
+
+            val aabb = player.boundingBox.expand(range, range, range)
+            @Suppress("UNCHECKED_CAST")
+            val nearbyItems = player.worldObj.getEntitiesWithinAABB(EntityItem::class.java, aabb) as List<EntityItem>
+
+            for (entityItem in nearbyItems) {
+                if (entityItem.isDead) continue
+                if (entityItem.delayBeforeCanPickup > 0) continue
+                val stack = entityItem.entityItem ?: continue
+                if (stack.stackSize <= 0) continue
+                if (!wrapper.canMagnetItem(stack)) continue
+
+                val original = stack.copy()
+                var remaining: ItemStack? = stack.copy()
+                var slotIndex = 0
+                while (remaining != null && slotIndex < wrapper.getSlots()) {
+                    remaining = wrapper.backpackItemStackHandler.prioritizedInsertion(slotIndex, remaining, false)
+                    slotIndex++
+                }
+
+                if (remaining == null || remaining.stackSize < original.stackSize) {
+                    if (remaining == null || remaining.stackSize <= 0) {
+                        entityItem.setDead()
+                    } else {
+                        entityItem.setDead()
+                        val leftover = EntityItem(player.worldObj, entityItem.posX, entityItem.posY, entityItem.posZ, remaining)
+                        leftover.delayBeforeCanPickup = 0
+                        player.worldObj.spawnEntityInWorld(leftover)
+                    }
+                    BackpackHelper.saveWrapper(inventoryStack, wrapper)
+                    player.worldObj.playSoundAtEntity(player, "random.pop", 0.2f,
+                        ((player.getRNG().nextFloat() - player.getRNG().nextFloat()) * 0.7f + 1.0f) * 2.0f)
+                }
+            }
+        }
     }
 
     @SubscribeEvent

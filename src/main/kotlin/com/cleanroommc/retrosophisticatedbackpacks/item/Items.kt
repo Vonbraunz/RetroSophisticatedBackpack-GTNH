@@ -82,4 +82,10 @@ object Items {
 
     @JvmField
     val advancedFilterUpgrade = FilterUpgradeItem("advanced_filter_upgrade", ::AdvancedFilterUpgradeWrapper)
+
+    @JvmField
+    val magnetUpgrade = MagnetUpgradeItem("magnet_upgrade", ::MagnetUpgradeWrapper)
+
+    @JvmField
+    val advancedMagnetUpgrade = MagnetUpgradeItem("advanced_magnet_upgrade", ::AdvancedMagnetUpgradeWrapper)
 }

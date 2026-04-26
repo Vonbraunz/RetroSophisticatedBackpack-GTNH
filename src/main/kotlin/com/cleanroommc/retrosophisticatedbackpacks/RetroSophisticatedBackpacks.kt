@@ -8,6 +8,7 @@ import com.cleanroommc.retrosophisticatedbackpacks.handler.RegistryHandler
 import com.cleanroommc.retrosophisticatedbackpacks.item.Items
 import com.cleanroommc.retrosophisticatedbackpacks.proxy.RSBProxy
 import com.cleanroommc.retrosophisticatedbackpacks.util.Utils.asTranslationKey
+import cpw.mods.fml.common.FMLCommonHandler
 import cpw.mods.fml.common.Mod
 import cpw.mods.fml.common.Mod.EventHandler
 import cpw.mods.fml.common.SidedProxy
@@ -58,6 +59,7 @@ object RetroSophisticatedBackpacks {
         NetworkHandler.register()
         NetworkRegistry.INSTANCE.registerGuiHandler(instance, BackpackGuiHandler)
         MinecraftForge.EVENT_BUS.register(EntityEventHandler)
+        FMLCommonHandler.instance().bus().register(EntityEventHandler)
         proxy?.init(event)
     }
 
