@@ -4,7 +4,7 @@ A backport of [RetroSophisticatedBackpacks](https://github.com/P3pp3rF1y/RetroSo
 
 ## Disclaimer
 
-This mod **IS NOT OFFICIAL WORK** of original author P3pp3rF1y, please do not report any issue to the original author.
+This mod **IS NOT OFFICIAL WORK** of original author P3pp3rF1y, please do not report any issue to the original author. This is based off CleanroomMC's Retro Sophisticated Backpacks backport to 1.12
 
 This mod is licensed under **GPLv3**. All assets are forked before Sophisticated Backpack changed its license to All Rights Reserved.
 
