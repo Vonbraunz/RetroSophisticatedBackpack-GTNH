@@ -33,6 +33,7 @@ class C2SToggleUpgradePacket() : IRefinedMessage {
 
             toggleable.toggle()
             upgradeItem.saveWrapper(stack, wrapper)
+            container.refreshFilterCache()
 
             // Persist immediately for item-held backpacks
             val backpackSlot = container.backpackSlotIndex

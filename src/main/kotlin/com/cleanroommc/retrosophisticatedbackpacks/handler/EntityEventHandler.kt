@@ -48,7 +48,8 @@ object EntityEventHandler {
             if (inventoryStack.item !is BackpackItem) continue
             val wrapper = BackpackHelper.getWrapper(inventoryStack) ?: continue
             if (!wrapper.canPickupItem(remaining ?: return null)) continue
-            val before = remaining!!.stackSize
+            if (wrapper.shouldVoidItem(remaining!!)) return null
+            val before = remaining.stackSize
             var slotIndex = 0
             while (remaining != null && slotIndex < wrapper.getSlots()) {
                 remaining = wrapper.backpackItemStackHandler.prioritizedInsertion(slotIndex, remaining, false)
@@ -86,6 +87,13 @@ object EntityEventHandler {
                 val stack = entityItem.entityItem ?: continue
                 if (stack.stackSize <= 0) continue
                 if (!wrapper.canMagnetItem(stack)) continue
+                if (wrapper.shouldVoidItem(stack)) {
+                    entityItem.setDead()
+                    BackpackHelper.saveWrapper(inventoryStack, wrapper)
+                    player.worldObj.playSoundAtEntity(player, "random.pop", 0.2f,
+                        ((player.getRNG().nextFloat() - player.getRNG().nextFloat()) * 0.7f + 1.0f) * 2.0f)
+                    continue
+                }
 
                 val original = stack.copy()
                 var remaining: ItemStack? = stack.copy()

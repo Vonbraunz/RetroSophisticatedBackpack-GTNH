@@ -6,6 +6,6 @@ import net.minecraft.item.ItemStack
 
 class AdvancedMagnetUpgradeWrapper : AdvancedUpgradeWrapper<MagnetUpgradeItem>(), IMagnetUpgrade {
     override val settingsLangKey: String = "gui.magnet_settings".asTranslationKey()
-    override val range = 10.0
+    override val range = 9.0
     override fun canMagnet(stack: ItemStack): Boolean = checkFilter(stack)
 }

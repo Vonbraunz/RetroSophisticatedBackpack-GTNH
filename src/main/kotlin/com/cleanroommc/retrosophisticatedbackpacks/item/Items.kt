@@ -88,4 +88,10 @@ object Items {
 
     @JvmField
     val advancedMagnetUpgrade = MagnetUpgradeItem("advanced_magnet_upgrade", ::AdvancedMagnetUpgradeWrapper)
+
+    @JvmField
+    val voidUpgrade = VoidUpgradeItem("void_upgrade", ::VoidUpgradeWrapper)
+
+    @JvmField
+    val advancedVoidUpgrade = VoidUpgradeItem("advanced_void_upgrade", ::AdvancedVoidUpgradeWrapper)
 }

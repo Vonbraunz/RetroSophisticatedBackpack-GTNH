@@ -150,8 +150,14 @@ retro_sophisticated_backpacks.gui.no_sorting_slot=No Sorting Slot
 retro_sophisticated_backpacks.gui.lock_all_sort=Select All Slots For No Sorting
 retro_sophisticated_backpacks.gui.unlock_all_sort=Select All Slots For Sorting
 
+item.retro_sophisticated_backpacks.void_upgrade.name=Void Upgrade
+item.retro_sophisticated_backpacks.advanced_void_upgrade.name=Advanced Void Upgrade
+retro_sophisticated_backpacks.tooltip.void_upgrade=Destroys picked-up items matching the filter
+retro_sophisticated_backpacks.tooltip.advanced_void_upgrade=Destroys picked-up items matching the filter with advanced options
+retro_sophisticated_backpacks.gui.void_settings=Void
+
 item.retro_sophisticated_backpacks.magnet_upgrade.name=Magnet Upgrade
 item.retro_sophisticated_backpacks.advanced_magnet_upgrade.name=Advanced Magnet Upgrade
-retro_sophisticated_backpacks.tooltip.magnet_upgrade=Attracts nearby items into the backpack (6 block radius)
-retro_sophisticated_backpacks.tooltip.advanced_magnet_upgrade=Attracts nearby items into the backpack with advanced filtering (10 block radius)
+retro_sophisticated_backpacks.tooltip.magnet_upgrade=Attracts nearby items into the backpack (5 block radius)
+retro_sophisticated_backpacks.tooltip.advanced_magnet_upgrade=Attracts nearby items into the backpack with advanced filtering (9 block radius)
 retro_sophisticated_backpacks.gui.magnet_settings=Magnet

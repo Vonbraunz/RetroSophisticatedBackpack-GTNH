@@ -83,6 +83,7 @@ class C2SUpgradeSettingPacket() : IRefinedMessage {
             }
 
             upgradeItem.saveWrapper(stack, wrapper)
+            container.refreshFilterCache()
 
             val backpackSlot = container.backpackSlotIndex
             if (backpackSlot != null) {

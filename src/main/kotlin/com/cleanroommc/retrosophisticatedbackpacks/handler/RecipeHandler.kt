@@ -166,6 +166,14 @@ object RecipeHandler {
             'R', MCItems.redstone,
             'C', MCBlocks.chest
         )
+        // Void: CRC / RBR / CRC (C=lava_bucket concept → use fire_charge, R=redstone, B=upgrade_base)
+        GameRegistry.addShapedRecipe(
+            ItemStack(RSBItems.voidUpgrade),
+            "FRF", "RBR", "FRF",
+            'F', MCItems.fire_charge,
+            'R', MCItems.redstone,
+            'B', RSBItems.upgradeBase
+        )
         // Magnet: IRI / RBR / IRI
         GameRegistry.addShapedRecipe(
             ItemStack(RSBItems.magnetUpgrade),
@@ -195,6 +203,7 @@ object RecipeHandler {
             RSBItems.advancedFilterUpgrade   to RSBItems.filterUpgrade,
             RSBItems.advancedRestockUpgrade  to RSBItems.restockUpgrade,
             RSBItems.advancedMagnetUpgrade   to RSBItems.magnetUpgrade,
+            RSBItems.advancedVoidUpgrade     to RSBItems.voidUpgrade,
         )
         for ((output, base) in adv) {
             GameRegistry.addShapedRecipe(

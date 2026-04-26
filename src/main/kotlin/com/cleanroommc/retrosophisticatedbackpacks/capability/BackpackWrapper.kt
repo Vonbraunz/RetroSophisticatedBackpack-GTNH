@@ -145,6 +145,10 @@ class BackpackWrapper(
         gatherUpgrades<IRestockUpgrade>()
             .any { (it as? IToggleable)?.enabled != false && it.canRestock(stack) }
 
+    fun shouldVoidItem(stack: ItemStack): Boolean =
+        gatherUpgrades<IVoidUpgrade>()
+            .any { (it as? IToggleable)?.enabled != false && it.shouldVoid(stack) }
+
     fun canMagnetItem(stack: ItemStack): Boolean =
         gatherUpgrades<IMagnetUpgrade>()
             .any { (it as? IToggleable)?.enabled != false && it.canMagnet(stack) }

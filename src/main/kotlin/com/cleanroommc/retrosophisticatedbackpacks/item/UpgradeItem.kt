@@ -6,6 +6,7 @@ import com.cleanroommc.retrosophisticatedbackpacks.capability.upgrade.AdvancedFe
 import com.cleanroommc.retrosophisticatedbackpacks.capability.upgrade.IAdvancedFilterable
 import com.cleanroommc.retrosophisticatedbackpacks.capability.upgrade.IBasicFilterable
 import com.cleanroommc.retrosophisticatedbackpacks.capability.upgrade.IFilterUpgrade
+import com.cleanroommc.retrosophisticatedbackpacks.capability.upgrade.IMagnetUpgrade
 import com.cleanroommc.retrosophisticatedbackpacks.capability.upgrade.IToggleable
 import com.cleanroommc.retrosophisticatedbackpacks.capability.upgrade.UpgradeWrapper
 import com.cleanroommc.retrosophisticatedbackpacks.handler.RegistryHandler
@@ -98,6 +99,10 @@ abstract class UpgradeItem(val registryNameStr: String, val hasTab: Boolean = fa
                 .lowercase().replaceFirstChar { it.uppercase() }
             lines.add("${L}Hunger: ${V}$hunger")
             lines.add("${L}Health: ${V}$health")
+        }
+
+        if (wrapper is IMagnetUpgrade) {
+            lines.add("${L}Range: ${V}${wrapper.range.toInt()} blocks")
         }
     }
 }

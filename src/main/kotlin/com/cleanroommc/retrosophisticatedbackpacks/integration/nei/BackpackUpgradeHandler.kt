@@ -62,7 +62,8 @@ class BackpackUpgradeHandler : TemplateRecipeHandler() {
         Items.feedingUpgrade, Items.advancedFeedingUpgrade, Items.depositUpgrade,
         Items.advancedDepositUpgrade, Items.restockUpgrade, Items.advancedRestockUpgrade,
         Items.filterUpgrade, Items.advancedFilterUpgrade,
-        Items.magnetUpgrade, Items.advancedMagnetUpgrade
+        Items.magnetUpgrade, Items.advancedMagnetUpgrade,
+        Items.voidUpgrade, Items.advancedVoidUpgrade
     ).filterIsInstance<UpgradeItem>()
 
     companion object {
