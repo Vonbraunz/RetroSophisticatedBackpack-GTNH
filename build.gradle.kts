@@ -121,8 +121,7 @@ dependencies {
         exclude("net.minecraftforge")
     }
 
-    // TODO: add ModularUI for 1.7.10 when GUI layer is implemented
-    // implementation("com.cleanroommc:modularui:2.4.0")
+    implementation("com.github.GTNewHorizons:ModularUI:1.3.3:dev")
 
     // TODO: confirm MixinBooter version available for 1.7.10
     if (use_mixins.toBoolean()) {

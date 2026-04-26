@@ -64,7 +64,7 @@ open class BackpackContainer(
         for (i in 0 until wrapper.upgradeSlotsSize()) {
             addSlotToContainer(object : Slot(upgradeInv, i,
                 UPGRADE_SLOT_X,
-                TOP_PAD + i * SLOT_SIZE) {
+                UPGRADE_TOP_PAD + i * SLOT_SIZE) {
                 override fun isItemValid(stack: ItemStack): Boolean =
                     stack.item is UpgradeItem
                 override fun getSlotStackLimit(): Int = 1
@@ -245,12 +245,13 @@ open class BackpackContainer(
 
     companion object {
         const val SLOT_SIZE       = 18
-        const val TOP_PAD         = 17
+        const val TOP_PAD         = 11   // 3px border + 8px label area — aligns with backpack_background_9.png
         const val LEFT_PAD        = 7
         const val UPGRADE_COL_WIDTH = 22   // width of the upgrade column strip
         const val UPGRADE_GAP       = 2    // gap between upgrade strip and backpack grid
         const val UPGRADE_SLOT_X    = 3    // x of upgrade slots within the GUI
-        const val PLAYER_INV_GAP    = 26   // main panel bottom pad (5) + panel gap (4) + inv label area (17)
+        const val PLAYER_INV_GAP    = 16   // 3px top + 8px font + 5px bottom — room for "Inventory" label
         const val HOTBAR_GAP        = 4
+        const val UPGRADE_TOP_PAD   = 3    // tighter top margin for upgrade column (no label area needed)
     }
 }
