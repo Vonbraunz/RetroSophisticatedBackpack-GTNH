@@ -13,7 +13,6 @@ item.retro_sophisticated_backpacks.stack_upgrade_tier_2.name=Stack Upgrade Tier 
 item.retro_sophisticated_backpacks.stack_upgrade_tier_3.name=Stack Upgrade Tier 3
 item.retro_sophisticated_backpacks.stack_upgrade_tier_4.name=Stack Upgrade Tier 4
 item.retro_sophisticated_backpacks.exponential_stack_upgrade.name=Exponential Stack Upgrade
-item.retro_sophisticated_backpacks.crafting_upgrade.name=Crafting Upgrade
 item.retro_sophisticated_backpacks.inception_upgrade.name=Inception Upgrade
 item.retro_sophisticated_backpacks.pickup_upgrade.name=Pickup Upgrade
 item.retro_sophisticated_backpacks.advanced_pickup_upgrade.name=Advanced Pickup Upgrade
@@ -44,7 +43,6 @@ retro_sophisticated_backpacks.tooltip.stack_upgrade=Multiplies stack size by %d
 
 retro_sophisticated_backpacks.tooltip.exponential_stack_upgrade=Stack multipliers will stack by multiplying instead of adding
 
-retro_sophisticated_backpacks.tooltip.crafting_upgrade=Adds additional crafting grid to side of backpack
 
 retro_sophisticated_backpacks.tooltip.inception_upgrade=Allows backpacks to be stored inside backpack
 
@@ -88,7 +86,6 @@ retro_sophisticated_backpacks.gui.advanced_restock_settings=Adv. Restock Setting
 retro_sophisticated_backpacks.gui.filter_settings=Filter Settings
 retro_sophisticated_backpacks.gui.advanced_filter_settings=Adv. Filter Settings
 
-retro_sophisticated_backpacks.gui.crafting_settings=Crafting
 
 retro_sophisticated_backpacks.gui.memory_settings=Memory Settings
 retro_sophisticated_backpacks.gui.sorting_settings=Sorting Settings
@@ -134,8 +131,6 @@ retro_sophisticated_backpacks.gui.sort_by_mod_id=Sort By Mod ID
 retro_sophisticated_backpacks.gui.sort_by_count=Sort By Count
 retro_sophisticated_backpacks.gui.sort_by_ore_dict=Sort By Ore Dictionary
 
-retro_sophisticated_backpacks.gui.craft_into_backpack=Shift Click Result Into Backpack
-retro_sophisticated_backpacks.gui.craft_into_player_inventory=Shift Click Result Into Player's Inventory
 
 retro_sophisticated_backpacks.gui.transfer_to_player_inv=Transfer All Items to Player Inventory
 retro_sophisticated_backpacks.gui.transfer_to_player_inv_matched_1=Transfer Matched Items to Player Inventory

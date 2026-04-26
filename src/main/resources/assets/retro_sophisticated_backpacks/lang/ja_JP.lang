@@ -13,7 +13,6 @@ item.retro_sophisticated_backpacks.stack_upgrade_tier_2.name=スタックアッ�
 item.retro_sophisticated_backpacks.stack_upgrade_tier_3.name=スタックアップグレード ティア3
 item.retro_sophisticated_backpacks.stack_upgrade_tier_4.name=スタックアップグレード ティア4
 item.retro_sophisticated_backpacks.exponential_stack_upgrade.name=指数スタックアップグレード
-item.retro_sophisticated_backpacks.crafting_upgrade.name=クラフトアップグレード
 item.retro_sophisticated_backpacks.inception_upgrade.name=入れ子アップグレード
 item.retro_sophisticated_backpacks.pickup_upgrade.name=収集アップグレード
 item.retro_sophisticated_backpacks.advanced_pickup_upgrade.name=強化収集アップグレード
@@ -44,7 +43,6 @@ retro_sophisticated_backpacks.tooltip.stack_upgrade=スタック数の上限を%
 
 retro_sophisticated_backpacks.tooltip.exponential_stack_upgrade=スタックアップグレードを複数使用した時の計算方法を加算から乗算にします
 
-retro_sophisticated_backpacks.tooltip.crafting_upgrade=バックパックの側面にクラフトグリッドを追加します
 
 retro_sophisticated_backpacks.tooltip.inception_upgrade=バックパックの中に別のバックパックを入れられるようになります
 

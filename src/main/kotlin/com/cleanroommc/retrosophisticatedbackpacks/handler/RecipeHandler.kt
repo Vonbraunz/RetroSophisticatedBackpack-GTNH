@@ -5,11 +5,18 @@ import cpw.mods.fml.common.registry.GameRegistry
 import net.minecraft.init.Blocks as MCBlocks
 import net.minecraft.init.Items as MCItems
 import net.minecraft.item.ItemStack
+import net.minecraftforge.oredict.RecipeSorter
 import net.minecraftforge.oredict.ShapedOreRecipe
 
 object RecipeHandler {
 
     fun registerRecipes() {
+        RecipeSorter.register(
+            "retro_sophisticated_backpacks:backpack_upgrade",
+            BackpackUpgradeRecipe::class.java,
+            RecipeSorter.Category.SHAPED,
+            "before:minecraft:shaped"
+        )
         backpacks()
         upgradeBase()
         stackUpgrades()

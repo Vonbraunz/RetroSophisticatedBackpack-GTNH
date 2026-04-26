@@ -12,7 +12,6 @@ item.retro_sophisticated_backpacks.stack_upgrade_tier_1.name=Ulepszenie stosu po
 item.retro_sophisticated_backpacks.stack_upgrade_tier_2.name=Ulepszenie stosu poziomu 2
 item.retro_sophisticated_backpacks.stack_upgrade_tier_3.name=Ulepszenie stosu poziomu 3
 item.retro_sophisticated_backpacks.stack_upgrade_tier_4.name=Ulepszenie stosu poziomu 4
-item.retro_sophisticated_backpacks.crafting_upgrade.name=Ulepszenie rzemieślnicze
 item.retro_sophisticated_backpacks.inception_upgrade.name=Ulepszenie incepcyjne
 item.retro_sophisticated_backpacks.pickup_upgrade.name=Ulepszenie zbierające
 item.retro_sophisticated_backpacks.advanced_pickup_upgrade.name=Zaawansowane ulepszenie zbierające
@@ -35,7 +34,6 @@ retro_sophisticated_backpacks.tooltip.upgrade_base=Nic nie robi! Możesz umieśc
 
 retro_sophisticated_backpacks.tooltip.stack_upgrade=Mnoży rozmiar stosu o %d
 
-retro_sophisticated_backpacks.tooltip.crafting_upgrade=Dodaje siatkę rzemieślniczą z boku plecaka
 
 retro_sophisticated_backpacks.tooltip.inception_upgrade=Pozwala umieścić plecaki w plecaku
 

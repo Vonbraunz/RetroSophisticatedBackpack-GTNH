@@ -12,7 +12,6 @@ item.retro_sophisticated_backpacks.stack_upgrade_tier_1.name=Улучшение 
 item.retro_sophisticated_backpacks.stack_upgrade_tier_2.name=Улучшение стаков Уровень 2
 item.retro_sophisticated_backpacks.stack_upgrade_tier_3.name=Улучшение стаков Уровень 3
 item.retro_sophisticated_backpacks.stack_upgrade_tier_4.name=Улучшение стаков Уровень 4
-item.retro_sophisticated_backpacks.crafting_upgrade.name=Улучшение Крафта
 item.retro_sophisticated_backpacks.inception_upgrade.name=Улучшение Инцепции
 
 #Творческие вкладки
@@ -27,7 +26,6 @@ retro_sophisticated_backpacks.tooltip.upgrade_base=Ничего не делае�
 
 retro_sophisticated_backpacks.tooltip.stack_upgrade=Умножает размер стака на %d
 
-retro_sophisticated_backpacks.tooltip.crafting_upgrade=Добавляет дополнительную сетку крафта на боковую часть рюкзака
 
 retro_sophisticated_backpacks.tooltip.inception_upgrade=Позволяет рюкзакам храниться внутри других рюкзаков
 

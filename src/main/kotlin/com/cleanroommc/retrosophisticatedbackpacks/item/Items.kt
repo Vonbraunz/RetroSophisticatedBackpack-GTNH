@@ -51,9 +51,6 @@ object Items {
     val stackUpgradeTier4 = StackUpgradeItem("stack_upgrade_tier_4", Config.stackUpgrade::obsidianMultiplier)
 
     @JvmField
-    val craftingUpgrade = CraftingUpgradeItem("crafting_upgrade")
-
-    @JvmField
     val inceptionUpgrade = InceptionUpgradeItem("inception_upgrade")
 
     @JvmField

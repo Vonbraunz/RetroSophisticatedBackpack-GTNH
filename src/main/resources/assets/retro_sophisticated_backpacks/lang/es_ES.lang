@@ -12,7 +12,6 @@ item.retro_sophisticated_backpacks.stack_upgrade_tier_1.name=Mejora de Apilado N
 item.retro_sophisticated_backpacks.stack_upgrade_tier_2.name=Mejora de Apilado Nivel 2
 item.retro_sophisticated_backpacks.stack_upgrade_tier_3.name=Mejora de Apilado Nivel 3
 item.retro_sophisticated_backpacks.stack_upgrade_tier_4.name=Mejora de Apilado Nivel 4
-item.retro_sophisticated_backpacks.crafting_upgrade.name=Mejora de Artesanía
 item.retro_sophisticated_backpacks.inception_upgrade.name=Mejora de Incepción
 
 #Pestañas Creativas
@@ -27,7 +26,6 @@ retro_sophisticated_backpacks.tooltip.upgrade_base=¡No hace nada! Siéntete lib
 
 retro_sophisticated_backpacks.tooltip.stack_upgrade=Multiplica el tamaño del apilado por %d
 
-retro_sophisticated_backpacks.tooltip.crafting_upgrade=Añade una cuadrícula de fabricación adicional al lado de la mochila
 
 retro_sophisticated_backpacks.tooltip.inception_upgrade=Permite que las mochilas se guarden dentro de otras mochilas
 

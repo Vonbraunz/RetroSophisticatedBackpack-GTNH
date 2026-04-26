@@ -13,7 +13,6 @@ item.retro_sophisticated_backpacks.stack_upgrade_tier_2.name=묶음 업그레이
 item.retro_sophisticated_backpacks.stack_upgrade_tier_3.name=묶음 업그레이드 3단계
 item.retro_sophisticated_backpacks.stack_upgrade_tier_4.name=묶음 업그레이드 4단계
 item.retro_sophisticated_backpacks.exponential_stack_upgrade.name=지수 묶음 업그레이드
-item.retro_sophisticated_backpacks.crafting_upgrade.name=조합 업그레이드
 item.retro_sophisticated_backpacks.inception_upgrade.name=인셉션 업그레이드
 item.retro_sophisticated_backpacks.pickup_upgrade.name=아이템 줍기 업그레이드
 item.retro_sophisticated_backpacks.advanced_pickup_upgrade.name=고급 아이템 줍기 업그레이드
@@ -44,7 +43,6 @@ retro_sophisticated_backpacks.tooltip.stack_upgrade=아이템 스택 크기를 %
 
 retro_sophisticated_backpacks.tooltip.exponential_stack_upgrade=묶음 배율이 더하기가 아닌 곱하기로 중첩됩니다
 
-retro_sophisticated_backpacks.tooltip.crafting_upgrade=가방 측면에 추가 조합 그리드를 추가합니다
 
 retro_sophisticated_backpacks.tooltip.inception_upgrade=가방 안에 가방을 보관할 수 있게 합니다
 
@@ -88,7 +86,6 @@ retro_sophisticated_backpacks.gui.advanced_restock_settings=고급 재보급 설
 retro_sophisticated_backpacks.gui.filter_settings=필터 설정
 retro_sophisticated_backpacks.gui.advanced_filter_settings=고급 필터 설정
 
-retro_sophisticated_backpacks.gui.crafting_settings=제작
 
 retro_sophisticated_backpacks.gui.memory_settings=기억 설정
 retro_sophisticated_backpacks.gui.sorting_settings=정렬 설정
@@ -134,8 +131,6 @@ retro_sophisticated_backpacks.gui.sort_by_mod_id=모드 ID순 정렬
 retro_sophisticated_backpacks.gui.sort_by_count=개수순 정렬
 retro_sophisticated_backpacks.gui.sort_by_ore_dict=광물 사전순 정렬
 
-retro_sophisticated_backpacks.gui.craft_into_backpack=결과물을 배낭으로 한꺼번에 옮기기
-retro_sophisticated_backpacks.gui.craft_into_player_inventory=결과물을 플레이어의 인벤토리로 한꺼번에 옮기기
 
 retro_sophisticated_backpacks.gui.transfer_to_player_inv=모든 아이템을 플레이어 인벤토리로 옮기기
 retro_sophisticated_backpacks.gui.transfer_to_player_inv_matched_1=일치하는 아이템을 플레이어 인벤토리로 옮기기
