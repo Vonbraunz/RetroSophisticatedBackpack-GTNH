@@ -2,14 +2,14 @@
 {
   "modid": "retro_sophisticated_backpacks",
   "name": "Retro Sophisticated Backpacks",
-  "description": "A backported and recreated version of Sophisticated Backpacks, adds several backpacks and upgrades to customize your storage strategy.",
+  "description": "A 1.7.10 proof of concept backport of the backported and recreated version of Sophisticated Backpacks, adds several backpacks and upgrades to customize your storage strategy.",
   "version": "${version}",
   "mcversion": "${mcversion}",
   "url": "",
   "updateUrl": "",
-  "authorList": ["ChAoS_UnItY"],
+  "authorList": ["VonBraunZ"],
   "credits": "P3pp3rF1y, the original creator of Sophisticated Backpacks",
-  "logoFile": "logo.png",
+  "logoFile": "",
   "screenshots": [],
   "dependencies": []
 }
