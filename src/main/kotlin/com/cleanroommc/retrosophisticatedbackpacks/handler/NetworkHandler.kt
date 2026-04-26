@@ -1,6 +1,7 @@
 package com.cleanroommc.retrosophisticatedbackpacks.handler
 
 import com.cleanroommc.retrosophisticatedbackpacks.network.C2SOpenBackpackPacket
+import com.cleanroommc.retrosophisticatedbackpacks.network.C2SToggleUpgradePacket
 import cpw.mods.fml.common.network.NetworkRegistry
 import cpw.mods.fml.common.network.simpleimpl.SimpleNetworkWrapper
 import cpw.mods.fml.relauncher.Side
@@ -20,6 +21,12 @@ object NetworkHandler {
         INSTANCE.registerMessage(
             C2SOpenBackpackPacket.Handler::class.java,
             C2SOpenBackpackPacket::class.java,
+            idGenerator.next(),
+            Side.SERVER
+        )
+        INSTANCE.registerMessage(
+            C2SToggleUpgradePacket.Handler::class.java,
+            C2SToggleUpgradePacket::class.java,
             idGenerator.next(),
             Side.SERVER
         )

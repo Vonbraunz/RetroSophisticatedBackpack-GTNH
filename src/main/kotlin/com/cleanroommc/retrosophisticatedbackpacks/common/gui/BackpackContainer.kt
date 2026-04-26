@@ -15,7 +15,7 @@ import net.minecraft.item.ItemStack
 open class BackpackContainer(
     val wrapper: BackpackWrapper,
     /** Slot index in the player's inventory that holds the backpack (null if placed as block). */
-    private val backpackSlotIndex: Int?,
+    val backpackSlotIndex: Int?,
     player: EntityPlayer,
 ) : Container() {
 
@@ -247,9 +247,9 @@ open class BackpackContainer(
         const val SLOT_SIZE       = 18
         const val TOP_PAD         = 11   // 3px border + 8px label area — aligns with backpack_background_9.png
         const val LEFT_PAD        = 7
-        const val UPGRADE_COL_WIDTH = 22   // width of the upgrade column strip
+        const val UPGRADE_COL_WIDTH = 28   // 1 border + 1 gap + 6 switch + 1 gap + 18 slot + 1 border
         const val UPGRADE_GAP       = 2    // gap between upgrade strip and backpack grid
-        const val UPGRADE_SLOT_X    = 3    // x of upgrade slots within the GUI
+        const val UPGRADE_SLOT_X    = 9    // x of upgrade slots (right of the vertical toggle switch)
         const val PLAYER_INV_GAP    = 16   // 3px top + 8px font + 5px bottom — room for "Inventory" label
         const val HOTBAR_GAP        = 4
         const val UPGRADE_TOP_PAD   = 3    // tighter top margin for upgrade column (no label area needed)

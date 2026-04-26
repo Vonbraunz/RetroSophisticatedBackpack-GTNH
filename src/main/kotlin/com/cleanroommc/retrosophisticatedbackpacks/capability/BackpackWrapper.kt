@@ -124,21 +124,26 @@ class BackpackWrapper(
     // ---------- Upgrade functionality ----------
 
     fun canPickupItem(stack: ItemStack): Boolean =
-        gatherUpgrades<IPickupUpgrade>().any { it.canPickup(stack) }
+        gatherUpgrades<IPickupUpgrade>()
+            .any { (it as? IToggleable)?.enabled != false && it.canPickup(stack) }
 
     fun feed(entity: EntityPlayer, handler: BackpackItemStackHandler): Boolean {
-        for (upgrade in gatherUpgrades<IFeedingUpgrade>())
+        for (upgrade in gatherUpgrades<IFeedingUpgrade>()) {
+            if ((upgrade as? IToggleable)?.enabled == false) continue
             return upgrade.feed(entity, handler)
+        }
         return false
     }
 
     fun canDeposit(slotIndex: Int): Boolean {
         val stack = getStackInSlot(slotIndex) ?: return false
-        return gatherUpgrades<IDepositUpgrade>().any { it.canDeposit(stack) }
+        return gatherUpgrades<IDepositUpgrade>()
+            .any { (it as? IToggleable)?.enabled != false && it.canDeposit(stack) }
     }
 
     fun canRestock(stack: ItemStack): Boolean =
-        gatherUpgrades<IRestockUpgrade>().any { it.canRestock(stack) }
+        gatherUpgrades<IRestockUpgrade>()
+            .any { (it as? IToggleable)?.enabled != false && it.canRestock(stack) }
 
     fun canInsert(stack: ItemStack): Boolean {
         val filterUpgrades = gatherUpgrades<IFilterUpgrade>().filter { it.enabled }
