@@ -6,7 +6,8 @@ import net.minecraft.nbt.NBTTagCompound
 
 /** Static accessors replacing the Forge Capability system for BackpackWrapper. */
 object BackpackHelper {
-    private const val BACKPACK_DATA_TAG = "BackpackCapability"
+    const val BACKPACK_DATA_TAG = "BackpackCapability"
+    private const val UUID_TAG = "UUID"
 
     fun getWrapper(stack: ItemStack?): BackpackWrapper? {
         if (stack == null || stack.stackSize <= 0) return null

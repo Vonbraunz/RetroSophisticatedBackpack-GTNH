@@ -7,7 +7,6 @@ import com.cleanroommc.retrosophisticatedbackpacks.block.BackpackBlock
 import com.cleanroommc.retrosophisticatedbackpacks.capability.BackpackHelper
 import com.cleanroommc.retrosophisticatedbackpacks.capability.BackpackWrapper
 import com.cleanroommc.retrosophisticatedbackpacks.common.gui.BackpackGuiHandler
-import com.cleanroommc.retrosophisticatedbackpacks.handler.CapabilityHandler
 import com.cleanroommc.retrosophisticatedbackpacks.handler.RegistryHandler
 import com.cleanroommc.retrosophisticatedbackpacks.util.IModelRegister
 import com.cleanroommc.retrosophisticatedbackpacks.util.Utils.asTranslationKey
@@ -107,16 +106,23 @@ class BackpackItem(block: net.minecraft.block.Block) : ItemBlock(block), IModelR
         return false
     }
 
-    // Feed upgrade tick, UUID cache
+    // Feed upgrade tick + ensure UUID is persisted on first tick
     override fun onUpdate(stack: ItemStack, world: World, entity: Entity, slot: Int, selected: Boolean) {
         if (!world.isRemote && entity is EntityPlayerMP) {
+            val nbt = stack.tagCompound
+            val hasUUID = nbt != null &&
+                nbt.hasKey(BackpackHelper.BACKPACK_DATA_TAG) &&
+                nbt.getCompoundTag(BackpackHelper.BACKPACK_DATA_TAG).hasKey("UUID")
             val wrapper = BackpackHelper.getWrapper(stack) ?: return
+            if (!hasUUID) {
+                BackpackHelper.saveWrapper(stack, wrapper)
+                return
+            }
             if (entity.ticksExisted % 20 == 0) {
                 if (wrapper.feed(entity, wrapper.backpackItemStackHandler)) {
                     BackpackHelper.saveWrapper(stack, wrapper)
                 }
             }
-            if (!wrapper.isCached) CapabilityHandler.cacheBackpackInventory(wrapper)
         }
     }
 
