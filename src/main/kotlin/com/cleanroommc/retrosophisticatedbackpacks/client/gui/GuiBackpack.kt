@@ -9,6 +9,7 @@ import com.cleanroommc.retrosophisticatedbackpacks.capability.upgrade.IToggleabl
 import com.cleanroommc.retrosophisticatedbackpacks.common.gui.BackpackContainer
 import com.cleanroommc.retrosophisticatedbackpacks.handler.NetworkHandler
 import com.cleanroommc.retrosophisticatedbackpacks.item.UpgradeItem
+import com.cleanroommc.retrosophisticatedbackpacks.network.C2SSortPacket
 import com.cleanroommc.retrosophisticatedbackpacks.network.C2SToggleUpgradePacket
 import com.cleanroommc.retrosophisticatedbackpacks.network.C2SUpgradeSettingPacket
 import net.minecraft.client.gui.inventory.GuiContainer
@@ -487,6 +488,18 @@ class GuiBackpack(private val container: BackpackContainer) : GuiContainer(conta
                 }
             }
         }
+        // Middle-click anywhere over the backpack grid → sort
+        if (mouseButton == 2) {
+            val gridX = guiLeft + container.backpackOffsetX + LPAD
+            val gridY = guiTop + TOP
+            val gridW = container.rowSize * SLOT
+            val gridH = container.colSize * SLOT
+            if (mouseX in gridX until gridX + gridW && mouseY in gridY until gridY + gridH) {
+                NetworkHandler.INSTANCE.sendToServer(C2SSortPacket())
+                return
+            }
+        }
+
         super.mouseClicked(mouseX, mouseY, mouseButton)
     }
 

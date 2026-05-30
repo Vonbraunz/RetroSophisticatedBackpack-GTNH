@@ -1,6 +1,7 @@
 package com.cleanroommc.retrosophisticatedbackpacks.handler
 
 import com.cleanroommc.retrosophisticatedbackpacks.network.C2SOpenBackpackPacket
+import com.cleanroommc.retrosophisticatedbackpacks.network.C2SSortPacket
 import com.cleanroommc.retrosophisticatedbackpacks.network.C2SToggleUpgradePacket
 import com.cleanroommc.retrosophisticatedbackpacks.network.C2SUpgradeSettingPacket
 import cpw.mods.fml.common.network.NetworkRegistry
@@ -34,6 +35,12 @@ object NetworkHandler {
         INSTANCE.registerMessage(
             C2SUpgradeSettingPacket.Handler::class.java,
             C2SUpgradeSettingPacket::class.java,
+            idGenerator.next(),
+            Side.SERVER
+        )
+        INSTANCE.registerMessage(
+            C2SSortPacket.Handler::class.java,
+            C2SSortPacket::class.java,
             idGenerator.next(),
             Side.SERVER
         )
